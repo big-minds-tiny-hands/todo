@@ -15,10 +15,13 @@ export default function SignInPage() {
   );
 }
 
-function signInErrorMessage(status: number): string {
-  if (status === 401 || status === 400) return "That email and password don't match. Try again, or reset your password.";
-  if (status === 429) return "Too many tries. Wait a minute, then try again.";
-  return "Could not reach Todo. Check your connection and try again.";
+/** `noAccount` adds a way to sign-up: a wrong password and an email with no account look the same here. */
+type SignInError = { message: string; noAccount?: boolean };
+
+function signInError(status: number): SignInError {
+  if (status === 401 || status === 400) return { message: "That email and password don't match. Try again, or reset your password.", noAccount: true };
+  if (status === 429) return { message: "Too many tries. Wait a minute, then try again." };
+  return { message: "Could not reach Todo. Check your connection and try again." };
 }
 
 function SignIn() {
@@ -26,7 +29,10 @@ function SignIn() {
   const params = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(() => socialErrorMessage(params.get("error")));
+  const [error, setError] = useState<SignInError | null>(() => {
+    const message = socialErrorMessage(params.get("error"));
+    return message ? { message } : null;
+  });
   const [busy, setBusy] = useState(false);
   const passwordChanged = params.get("reset") === "1";
   const nextParam = params.get("next");
@@ -39,7 +45,7 @@ function SignIn() {
     const { error } = await authClient.signIn.email({ email: email.trim(), password });
     if (error) {
       setBusy(false);
-      setError(signInErrorMessage(error.status));
+      setError(signInError(error.status));
       return;
     }
     router.replace(next);
@@ -99,8 +105,18 @@ function SignIn() {
             />
             {error && (
               <p className="err-text" id="pw-err" role="alert">
-                <AlertIcon size={18} />
-                {error}
+                <AlertIcon size={18} style={{ flex: "none" }} />
+                <span>
+                  {error.message}
+                  {error.noAccount && (
+                    <>
+                      {" "}No account yet?{" "}
+                      <Link className="link" href={email.trim() ? `/sign-up?email=${encodeURIComponent(email.trim())}` : "/sign-up"} style={{ display: "inline", fontSize: "inherit", color: "inherit", fontWeight: 600, textDecoration: "underline" }}>
+                        Create one
+                      </Link>
+                    </>
+                  )}
+                </span>
               </p>
             )}
           </div>
