@@ -111,7 +111,7 @@ export function FocusSection({ focus, streak, ...props }: { focus: Task[]; strea
 }
 
 /** Swipe right on an open Today task to complete it, with the same reward as its check. */
-function completeAction(task: Task, onCheck: CheckProps["onCheck"]): SwipeAction | undefined {
+export function completeAction(task: Task, onCheck: CheckProps["onCheck"]): SwipeAction | undefined {
   if (task.done) return undefined;
   return { label: "Done", icon: <CheckIcon />, tone: "lime", run: () => onCheck(task, true) };
 }
@@ -136,6 +136,20 @@ export function Disclosure({ id, label, children }: { id: string; label: ReactNo
   );
 }
 
+/** An open Today task: the check finishes it, the title opens it, and `children` add trailing controls. */
+export function OpenTaskRow({ task, meta, onCheck, children }: { task: Task; meta: string; onCheck: CheckProps["onCheck"]; children?: ReactNode }) {
+  return (
+    <div className="task">
+      <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`Complete ${task.title}`} />
+      <Link className="t" href={`/task/${task._id}`} style={{ textDecoration: "none" }}>
+        <div className="tt">{task.title}</div>
+        {meta && <div className="m">{meta}</div>}
+      </Link>
+      {children}
+    </div>
+  );
+}
+
 /** The rest of Today below a running focus set, with the same check and swipe as the focus set. */
 export function MoreToday({ tasks, today, onCheck }: { tasks: Task[]; today: string; onCheck: CheckProps["onCheck"] }) {
   if (tasks.length === 0) return null;
@@ -143,13 +157,7 @@ export function MoreToday({ tasks, today, onCheck }: { tasks: Task[]; today: str
     <Disclosure id="more-today" label={`${tasks.length} more ${tasks.length === 1 ? "task" : "tasks"} today`}>
       {tasks.map((task) => (
         <SwipeRow key={task._id} right={completeAction(task, onCheck)}>
-          <div className="task">
-            <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`Complete ${task.title}`} />
-            <Link className="t" href={`/task/${task._id}`} style={{ textDecoration: "none" }}>
-              <div className="tt">{task.title}</div>
-              <div className="m">{pickMeta(task, today)}</div>
-            </Link>
-          </div>
+          <OpenTaskRow task={task} meta={pickMeta(task, today)} onCheck={onCheck} />
         </SwipeRow>
       ))}
     </Disclosure>

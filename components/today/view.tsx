@@ -1,7 +1,7 @@
 import type { FunctionReturnType } from "convex/server";
 import type { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
-import { lengthLabel, minutesOf } from "@/lib/day";
+import { clockLabel, lengthLabel, minutesOf } from "@/lib/day";
 import { PRIORITY_LABEL } from "@/components/ui-todo";
 
 export type Task = Doc<"tasks">;
@@ -50,9 +50,10 @@ export function checklistLabel(task: Task) {
   return `Checklist ${done}/${task.checklist.length}`;
 }
 
-/** "High · Checklist 0/5 · from calendar" for picking rows. */
-export function pickMeta(task: Task, today: string) {
-  const parts: string[] = [PRIORITY_LABEL[task.priority]];
+/** "High · 9:00 AM · Checklist 0/5 · from calendar". Lists grouped by priority leave the priority out. */
+export function pickMeta(task: Task, today: string, { priority = true } = {}) {
+  const parts: string[] = priority ? [PRIORITY_LABEL[task.priority]] : [];
+  if (task.startTime) parts.push(clockLabel(task.startTime));
   if (task.checklist.length > 0) parts.push(checklistLabel(task));
   if (task.plannedDay === today && task.todayDay !== today) parts.push("from calendar");
   return parts.join(" · ");
