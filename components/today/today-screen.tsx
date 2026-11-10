@@ -127,13 +127,14 @@ export function TodayScreen() {
     case "plan":
       body = (
         <>
-          <TodayHeader today={today} title="Plan today">
+          <TodayHeader today={today} title="Plan today" progress={<Ring done={view.data.doneToday.length} target={view.data.settings.dailyTarget} href="/wins" />}>
             <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
           <PlanBody
             today={today}
             onToday={[...view.today].sort(byPriority)}
+            done={view.data.doneToday}
             onCheck={onCheck}
             goals={<GoalsSection goals={view.goals} today={today} prefs={view.data.settings} invite />}
           />
@@ -218,11 +219,13 @@ export function TodayScreen() {
 function PlanBody({
   today,
   onToday,
+  done,
   onCheck,
   goals,
 }: {
   today: string;
   onToday: Task[];
+  done: Task[];
   onCheck: (task: Task, done: boolean) => void;
   goals: ReactNode;
 }) {
@@ -284,6 +287,7 @@ function PlanBody({
             </PriorityGroups>
           </section>
         )}
+        <DoneToday tasks={done} onCheck={onCheck} />
         {goals}
       </main>
       <div className="cta">
