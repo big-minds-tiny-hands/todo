@@ -1,9 +1,22 @@
-# Merge queue: squash merges, re-tested against the latest main. Org defaults
-# (squash with the PR title and body, one PR per check, one check at a time,
-# the "Not held" protection) come from big-minds-tiny-hands/.github; see its
-# CI-STANDARD.md. A PR enters with the `queue` label (auto-merge below) or by
-# commenting `@mergifyio queue`.
-extends: .github
+# Merge queue: squash merges, re-tested against the latest main. A PR enters
+# with the `queue` label (auto-merge below) or by commenting `@mergifyio queue`.
+# The org base in big-minds-tiny-hands/.github (CI-STANDARD.md) is copied in
+# here, not extended: that repo is private and this one is public, and Mergify
+# refuses a private base for a public repo.
+
+defaults:
+  queue_rule:
+    batch_size: 1
+    max_checks_retries: 0
+    merge_method: squash
+    update_method: merge
+    commit_message_format:
+      title: pr-title
+      body: pr-body
+
+merge_queue:
+  max_parallel_checks: 1
+  reset_on_external_merge: always
 
 queue_rules:
   - name: default
@@ -21,6 +34,13 @@ merge_protections_settings:
     - label = queue
 
 merge_protections:
+  - name: Not held
+    description: A draft or a do-not-merge label keeps a PR out of the default branch.
+    if:
+      - base = main
+    success_conditions:
+      - -draft
+      - -label = do-not-merge
   # The squash commit is the PR title (commit_message_format in the org base).
   # Same types as @commitlint/config-conventional.
   - name: Conventional PR title
