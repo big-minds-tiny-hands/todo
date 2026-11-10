@@ -13,7 +13,7 @@ function signUpError(status: number, code: string | undefined): SignUpError {
   if (status === 422 || code?.startsWith("USER_ALREADY_EXISTS")) return { field: "email", message: "This email already has an account. Sign in instead." };
   if (code === "PASSWORD_TOO_SHORT") return { field: "password", message: "Use at least 8 characters for your password." };
   if (status === 429) return { field: "form", message: "Too many tries. Wait a few minutes, then try again." };
-  return { field: "form", message: "Could not reach Todo. Check your connection and try again." };
+  return { field: "form", message: "Could not reach Tiny ToDo. Check your connection and try again." };
 }
 
 function ErrorText({ id, message }: { id: string; message: string }) {
@@ -61,7 +61,7 @@ function SignUp() {
       <main className="narrow" style={{ flex: 1, display: "flex", flexDirection: "column", padding: "72px 24px 40px", gap: 40 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Logo />
-          <span style={{ fontFamily: "var(--fd)", fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em" }}>Todo</span>
+          <span style={{ fontFamily: "var(--fd)", fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em" }}>Tiny ToDo</span>
         </div>
 
         <h1 className="h1">Create your account</h1>

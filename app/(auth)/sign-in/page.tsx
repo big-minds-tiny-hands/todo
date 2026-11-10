@@ -21,7 +21,7 @@ type SignInError = { message: string; noAccount?: boolean };
 function signInError(status: number): SignInError {
   if (status === 401 || status === 400) return { message: "That email and password don't match. Try again, or reset your password.", noAccount: true };
   if (status === 429) return { message: "Too many tries. Wait a minute, then try again." };
-  return { message: "Could not reach Todo. Check your connection and try again." };
+  return { message: "Could not reach Tiny ToDo. Check your connection and try again." };
 }
 
 function SignIn() {
@@ -56,7 +56,7 @@ function SignIn() {
       <main className="narrow" style={{ flex: 1, display: "flex", flexDirection: "column", padding: "72px 24px 40px", gap: 40 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Logo />
-          <span style={{ fontFamily: "var(--fd)", fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em" }}>Todo</span>
+          <span style={{ fontFamily: "var(--fd)", fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em" }}>Tiny ToDo</span>
         </div>
 
         <h1 className="h1">Sign in</h1>
@@ -131,7 +131,7 @@ function SignIn() {
         </Link>
 
         <p className="muted" style={{ margin: 0, alignSelf: "center" }}>
-          New to Todo?{" "}
+          New to Tiny ToDo?{" "}
           <Link className="link" href="/sign-up" style={{ display: "inline" }}>
             Create an account
           </Link>

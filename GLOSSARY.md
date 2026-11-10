@@ -1,4 +1,4 @@
-# Todo
+# Tiny ToDo
 
 A personal planner for one person's workday. Its purpose is to help a user pick what matters most each day and feel that the day was won.
 

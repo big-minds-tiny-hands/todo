@@ -1,4 +1,4 @@
-# Todo
+# Tiny ToDo
 
 A to-do app that helps you finish what matters today. Dump every task into All tasks, pick today's work by priority, commit to a small focus set, and check it off. Daily goals and time slots sit on the same screen. Dark theme, phone and computer.
 

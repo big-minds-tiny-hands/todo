@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Todo design system. Ported from the design canvas ("Todo app screens").
+ * Tiny ToDo design system. Ported from the design canvas ("Todo app screens").
  * Light is the paper version of the same layout; dark is the canvas look.
  */
 :root {
@@ -464,7 +464,7 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
   .phone:has(> .tabbar) { display: grid; grid-template-columns: 232px minmax(0, 1fr); grid-auto-rows: min-content; align-content: start; }
   .phone:has(> .tabbar) > * { grid-column: 2; width: 100%; max-width: 860px; justify-self: center; }
   .phone > .tabbar { grid-column: 1; grid-row: 1 / span 40; align-self: start; position: sticky; top: 0; height: 100dvh; max-width: none; margin: 0; flex-direction: column; justify-content: flex-start; gap: 4px; padding: 28px 14px; border-top: 0; border-right: 1px solid var(--line); backdrop-filter: none; background: var(--bg); }
-  .tabbar::before { content: "Todo"; font-family: var(--fd); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--tx); padding: 4px 14px 24px; }
+  .tabbar::before { content: "Tiny ToDo"; font-family: var(--fd); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--tx); padding: 4px 14px 24px; }
   .tab { flex: none; flex-direction: row; justify-content: flex-start; gap: 12px; padding: 0 14px; min-height: 48px; font-size: 15px; }
   .tab .i { width: 22px; height: 22px; }
   .tab.on { background: var(--s2); }
