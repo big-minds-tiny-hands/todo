@@ -1,0 +1,31 @@
+# Merge queue: squash merges, re-tested against the latest main. Org defaults
+# (squash with the PR title and body, one PR per check, one check at a time,
+# the "Not held" protection) come from big-minds-tiny-hands/.github; see its
+# CI-STANDARD.md. A PR enters with the `queue` label (auto-merge below) or by
+# commenting `@mergifyio queue`.
+extends: .github
+
+queue_rules:
+  - name: default
+    branch_protection_injection_mode: queue
+    queue_conditions:
+      - base = main
+      - head-repo-full-name = big-minds-tiny-hands/todo
+      - -draft
+      - check-success = Quality gate
+      - check-success = PR hygiene / checks
+
+merge_protections_settings:
+  reporting_method: check-runs
+  auto_merge_conditions:
+    - label = queue
+
+merge_protections:
+  # The squash commit is the PR title (commit_message_format in the org base).
+  # Same types as @commitlint/config-conventional.
+  - name: Conventional PR title
+    description: The PR title is a Conventional Commit, because it becomes the squash commit.
+    if:
+      - base = main
+    success_conditions:
+      - "title ~= ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\\([^)]+\\))?!?: \\S"
