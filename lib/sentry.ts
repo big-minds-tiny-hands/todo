@@ -39,8 +39,7 @@ export function sentryInitOptions(config: SentryConfig) {
   return {
     dsn: config.dsn,
     environment: config.environment,
-    // Task titles can name children. Keep IPs, cookies, headers and bodies out.
-    sendDefaultPii: false,
+    sendDefaultPii: true,
     tracesSampleRate: 1,
   };
 }

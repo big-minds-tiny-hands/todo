@@ -25,10 +25,6 @@ export function posthogConfig(env: PostHogEnv = readEnv()): PostHogConfig | null
   return { token: env.token, environment: env.environment || "development" };
 }
 
-/**
- * The shared project holds PHI for another app, and task titles can name
- * children, so autocapture and replay never record page text or input values.
- */
 export function posthogInitOptions(config: PostHogConfig): Partial<PostHogInitOptions> {
   return {
     api_host: POSTHOG_PROXY_PATH,
@@ -37,13 +33,16 @@ export function posthogInitOptions(config: PostHogConfig): Partial<PostHogInitOp
     person_profiles: "identified_only",
     // Sentry owns errors.
     capture_exceptions: false,
-    mask_all_text: true,
-    mask_all_element_attributes: true,
+    enable_recording_console_log: true,
+    mask_all_text: false,
+    mask_all_element_attributes: false,
+    // Local values win over the shared project's remote masking, which blocks
+    // images and masks inputs for another app.
     session_recording: {
-      maskAllInputs: true,
-      maskTextSelector: "*",
-      recordHeaders: false,
-      recordBody: false,
+      maskAllInputs: false,
+      blockSelector: "[data-ph-block]",
+      recordHeaders: true,
+      recordBody: true,
     },
     loaded: (posthog) => {
       posthog.register({ app: POSTHOG_APP, environment: config.environment });
