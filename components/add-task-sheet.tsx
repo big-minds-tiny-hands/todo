@@ -37,37 +37,42 @@ function AddTaskForm({ today, defaultWhen = "later", defaultDay }: AddTaskProps)
   const [when, setWhen] = useState<When>(defaultWhen);
   const [day, setDay] = useState(defaultDay ?? today);
   const [time, setTime] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(0);
   const [missingTitle, setMissingTitle] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
 
+  // The form clears the moment a task is submitted, so the next title can be typed while the save is in flight.
+  // A failed save puts the title back.
   async function submit(event: { preventDefault(): void }) {
     event.preventDefault();
-    if (busy) return;
     if (!title.trim()) {
       setMissingTitle(true);
       titleRef.current?.focus();
       return;
     }
-    setBusy(true);
+    const draft = { title, priority, time, when };
+    setTitle("");
+    setTime("");
+    setPriority("normal");
+    titleRef.current?.focus();
+    setSaving((n) => n + 1);
     try {
       await create({
-        title,
-        priority,
-        todayDay: when === "today" ? today : undefined,
-        plannedDay: when === "day" ? day : undefined,
-        startTime: time || undefined,
+        title: draft.title,
+        priority: draft.priority,
+        todayDay: draft.when === "today" ? today : undefined,
+        plannedDay: draft.when === "day" ? day : undefined,
+        startTime: draft.time || undefined,
       });
-      showToast(when === "today" ? "Added to Today" : when === "day" ? "Added to the calendar" : "Added to All tasks", {
+      showToast(draft.when === "today" ? "Added to Today" : draft.when === "day" ? "Added to the calendar" : "Added to All tasks", {
         icon: <CheckIcon size={18} style={{ strokeWidth: 2.6 }} />,
         duration: 2000,
       });
-      setTitle("");
-      setTime("");
-      setPriority("normal");
-      titleRef.current?.focus();
+    } catch {
+      setTitle((current) => current || draft.title);
+      showToast(`Could not add “${draft.title}”. Check your connection and try again.`, { duration: 6000 });
     } finally {
-      setBusy(false);
+      setSaving((n) => n - 1);
     }
   }
 
@@ -140,8 +145,8 @@ function AddTaskForm({ today, defaultWhen = "later", defaultDay }: AddTaskProps)
           </button>
         )}
       </div>
-      <button className="btn pri full" type="submit" disabled={busy} style={{ marginTop: 4 }}>
-        {busy && <SpinnerIcon />}
+      <button className="btn pri full" type="submit" style={{ marginTop: 4 }}>
+        {saving > 0 && <SpinnerIcon />}
         Add task
       </button>
     </form>

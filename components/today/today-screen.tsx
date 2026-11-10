@@ -8,13 +8,13 @@ import { AddTaskSheet } from "@/components/add-task-sheet";
 import { Celebration } from "@/components/celebration";
 import { GettingStartedCard, GettingStartedSteps, InstallNudge, OnceHint, type StartStep } from "@/components/onboarding";
 import { LoadingBody } from "@/components/frames";
-import { CheckIcon, ChevronRight, CloseIcon, ListIcon, PlusIcon, RepeatIcon, SunIcon } from "@/components/icons";
+import { CheckIcon, CloseIcon, ListIcon, PlusIcon, RepeatIcon, SunIcon } from "@/components/icons";
 import { SwipeRow } from "@/components/swipe-row";
 import { Avatar, Check, PriorityDot, Ring } from "@/components/ui-todo";
 import { useToday } from "@/hooks/use-today";
 import { lastDays, weekday, weekOf } from "@/lib/day";
 import { usePicks } from "./choose-focus";
-import { AddButton, FocusSection, GoalsSection, MoreToday, NewDayBanner, ScheduleSection, StreakPill, TodayHeader } from "./parts";
+import { AddButton, DoneToday, FocusSection, GoalsSection, MoreToday, NewDayBanner, ScheduleSection, StreakPill, TodayHeader } from "./parts";
 import { TimeCheck, useDismissedSlots } from "./time-check";
 import { useCheck } from "./use-check";
 import { useMoment } from "./use-moment";
@@ -170,7 +170,10 @@ export function TodayScreen() {
             />
             <ScheduleSection schedule={view.data.schedule} minutes={minutes} onCheck={onCheck} />
             <GoalsSection goals={view.goals} today={today} prefs={view.data.settings} />
-            <MoreToday tasks={view.data.rest} today={today} onCheck={onCheck} />
+            <div style={{ gridArea: "more", display: "flex", flexDirection: "column", gap: 10 }}>
+              <MoreToday tasks={view.data.rest} today={today} onCheck={onCheck} />
+              <DoneToday tasks={view.data.doneToday.filter((t) => !view.data.focus.some((f) => f._id === t._id) && !view.data.schedule.some((f) => f._id === t._id))} onCheck={onCheck} />
+            </div>
           </main>
         </>
       );
@@ -183,7 +186,7 @@ export function TodayScreen() {
             {avatar}
           </TodayHeader>
           {installNudge}
-          <NextSetBody data={view.data} open={[...view.open].sort(byPriority)} today={today} />
+          <NextSetBody data={view.data} open={[...view.open].sort(byPriority)} today={today} onCheck={onCheck} />
         </>
       );
       break;
@@ -202,6 +205,7 @@ export function TodayScreen() {
             streak={streak}
             week={wins?.week}
             onPlanMore={() => setPlanning(true)}
+            onCheck={onCheck}
           />
         </>
       );
@@ -310,13 +314,12 @@ function PlanBody({ today, onToday, start }: { today: string; onToday: Task[]; s
   );
 }
 
-function NextSetBody({ data, open, today }: { data: TodayData; open: Task[]; today: string }) {
+function NextSetBody({ data, open, today, onCheck }: { data: TodayData; open: Task[]; today: string; onCheck: (task: Task, done: boolean) => void }) {
   const limit = data.settings.focusSize;
   const startFocus = useMutation(api.tasks.startFocus);
   const { picks, toggle } = usePicks(open, limit);
   const picked = picks.map((id) => open.find((t) => t._id === id)!);
   const left = open.filter((t) => !picks.includes(t._id));
-  const done = data.doneToday.length;
   return (
     <>
       <main className="scroll cols" style={{ gridTemplateAreas: "'focus today' 'done today'" }}>
@@ -384,17 +387,9 @@ function NextSetBody({ data, open, today }: { data: TodayData; open: Task[]; tod
           </Link>
         </section>
 
-        {done > 0 && (
-          <Link className="card row" href="/wins" style={{ gridArea: "done" }}>
-            <span className="check on" aria-hidden="true" style={{ margin: "-6px -4px -6px -8px" }}>
-              <span>
-                <CheckIcon />
-              </span>
-            </span>
-            <span className="t">{done} done today</span>
-            <ChevronRight style={{ color: "var(--tx3)" }} />
-          </Link>
-        )}
+        <div style={{ gridArea: "done" }}>
+          <DoneToday tasks={data.doneToday} onCheck={onCheck} />
+        </div>
       </main>
       {picks.length > 0 && (
         <div className="cta">
@@ -416,6 +411,7 @@ function DayWonBody({
   streak,
   week,
   onPlanMore,
+  onCheck,
 }: {
   data: TodayData;
   goals: GoalRow[];
@@ -423,6 +419,7 @@ function DayWonBody({
   streak: number;
   week: { day: string; count: number }[] | undefined;
   onPlanMore: () => void;
+  onCheck: (task: Task, done: boolean) => void;
 }) {
   const target = data.settings.dailyTarget;
   const wonDays = week?.filter((d) => d.count >= target).length ?? 0;
@@ -480,6 +477,7 @@ function DayWonBody({
             <span className="btn sec sm">Plan more</span>
           </button>
         )}
+        <DoneToday tasks={data.doneToday} onCheck={onCheck} />
       </section>
     </main>
   );

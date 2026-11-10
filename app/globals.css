@@ -196,6 +196,7 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 .task .m .i { width: 14px; height: 14px; }
 .task.done .tt { color: var(--tx3); text-decoration: line-through; }
 .task.dim { opacity: 0.55; }
+.task.dim-text .tt { color: var(--tx2); }
 .task.sel { background: var(--s2); }
 .task.glow { background: var(--lime-soft); }
 

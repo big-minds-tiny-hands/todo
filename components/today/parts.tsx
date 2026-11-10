@@ -117,39 +117,65 @@ function completeAction(task: Task, onCheck: CheckProps["onCheck"]): SwipeAction
   return { label: "Done", icon: <CheckIcon />, tone: "lime", run: () => onCheck(task, true) };
 }
 
-/**
- * The rest of Today below a running focus set. Tapping the row opens the tasks in place, with the same check and
- * swipe as the focus set, instead of leaving the screen.
- */
-export function MoreToday({ tasks, today, onCheck }: { tasks: Task[]; today: string; onCheck: CheckProps["onCheck"] }) {
+/** A row that opens its list in place. More today, Done today and Recently deleted all use it. */
+export function Disclosure({ id, label, children }: { id: string; label: ReactNode; children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  if (tasks.length === 0) return null;
   return (
-    <section style={{ gridArea: "more" }}>
-      <button type="button" className="card row more-toggle" aria-expanded={open} aria-controls="more-today" onClick={() => setOpen(!open)}>
-        <span className="t">
-          {tasks.length} more {tasks.length === 1 ? "task" : "tasks"} today
-        </span>
+    <div>
+      <button type="button" className="card row more-toggle" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+        <span className="t">{label}</span>
         <ChevronRight className="more-chevron" />
       </button>
-      <div id="more-today" className="more-panel" data-open={open || undefined} inert={!open}>
+      <div id={id} className="more-panel" data-open={open || undefined} inert={!open}>
         <div>
           <div className="card" style={{ marginTop: 10 }}>
-            {tasks.map((task) => (
-              <SwipeRow key={task._id} right={completeAction(task, onCheck)}>
-                <div className={["task", task.done && "done"].filter(Boolean).join(" ")}>
-                  <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`${task.done ? "Undo" : "Complete"} ${task.title}`} />
-                  <div className="t">
-                    <div className="tt">{task.title}</div>
-                    <div className="m">{pickMeta(task, today)}</div>
-                  </div>
-                </div>
-              </SwipeRow>
-            ))}
+            {children}
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  );
+}
+
+/** The rest of Today below a running focus set, with the same check and swipe as the focus set. */
+export function MoreToday({ tasks, today, onCheck }: { tasks: Task[]; today: string; onCheck: CheckProps["onCheck"] }) {
+  if (tasks.length === 0) return null;
+  return (
+    <Disclosure id="more-today" label={`${tasks.length} more ${tasks.length === 1 ? "task" : "tasks"} today`}>
+      {tasks.map((task) => (
+        <SwipeRow key={task._id} right={completeAction(task, onCheck)}>
+          <div className="task">
+            <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`Complete ${task.title}`} />
+            <Link className="t" href={`/task/${task._id}`} style={{ textDecoration: "none" }}>
+              <div className="tt">{task.title}</div>
+              <div className="m">{pickMeta(task, today)}</div>
+            </Link>
+          </div>
+        </SwipeRow>
+      ))}
+    </Disclosure>
+  );
+}
+
+/**
+ * Everything finished today, newest first. Unchecking a task here undoes its check at any time, long after the
+ * toast's Undo is gone.
+ */
+export function DoneToday({ tasks, onCheck }: { tasks: Task[]; onCheck: CheckProps["onCheck"] }) {
+  if (tasks.length === 0) return null;
+  const newestFirst = [...tasks].sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0));
+  return (
+    <Disclosure id="done-today" label={`${tasks.length} done today`}>
+      {newestFirst.map((task) => (
+        <div key={task._id} className="task done">
+          <Check checked onChange={() => onCheck(task, false)} label={`Undo ${task.title}`} />
+          <Link className="t" href={`/task/${task._id}`} style={{ textDecoration: "none" }}>
+            <div className="tt">{task.title}</div>
+            <div className="m">{task.doneAt ? `Done ${clockOf(task.doneAt)}` : "Done"}</div>
+          </Link>
+        </div>
+      ))}
+    </Disclosure>
   );
 }
 

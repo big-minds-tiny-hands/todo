@@ -318,6 +318,23 @@ export const restore = mutation({
   },
 });
 
+/** Deleted tasks, newest first, so a delete can be undone long after its toast. */
+export const recentlyDeleted = query({
+  args: {},
+  returns: v.array(taskDoc),
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const mine = await ctx.db
+      .query("tasks")
+      .withIndex("by_user_done", (q) => q.eq("userId", userId))
+      .collect();
+    return mine
+      .filter((t) => t.deletedAt !== undefined)
+      .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0))
+      .slice(0, 30);
+  },
+});
+
 /** Move a task up or down inside its priority group. */
 export const move = mutation({
   args: { id: v.id("tasks"), direction: v.union(v.literal("up"), v.literal("down")) },

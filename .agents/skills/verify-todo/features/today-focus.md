@@ -12,12 +12,14 @@ A user puts tasks on Today, commits to a focus set of the few that come first (3
 - `focus-next` the next set picks from what is left on Today.
 - `day-won` reaching the daily target shows `Day won` with the week strip.
 - `focus-mode` the expand control opens `/focus`, one task at a time.
+- `more-today` `<n> more tasks today` opens the rest of Today in place, with checks and swipe.
+- `done-today` `<n> done today` opens every task finished today; `Undo <title>` unchecks it at any time.
 
 ## How to get to it (user POV)
 
 - Open Today: the `Today` tab, or `/`.
 - Add to Today: `Add your first task` on first run, the `Add a task` button in the Today header, or `Add <title> to Today` on All tasks.
-- Choose the set: `Choose a focus set` on the plan screen, or the `<n> more tasks today` row below a running set.
+- Choose the set: `Choose a focus set` on the plan screen, or `Pick the next focus set` after a set is done.
 - Check off: the `Complete <title>` button on a focus row, or `Done` in focus mode.
 
 ## Driving it with e2e

@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { AddTaskSheet } from "@/components/add-task-sheet";
 import { ChevronRight, ListIcon, PlusIcon, SunIcon, TrashIcon } from "@/components/icons";
 import { OnceHint } from "@/components/onboarding";
+import { RecentlyDeleted } from "@/components/tasks/recently-deleted";
 import { SwipeRow } from "@/components/swipe-row";
 import { DaySheet } from "@/components/tasks/day-sheet";
 import { TaskActionsMenu, useAddToToday, useDeleteTask } from "@/components/tasks/task-actions-menu";
@@ -88,6 +89,9 @@ export default function AllTasksPage() {
             <PlusIcon style={{ strokeWidth: 2.4 }} />
             Add a task
           </button>
+          <div style={{ width: "100%", textAlign: "left", marginTop: 12 }}>
+            <RecentlyDeleted />
+          </div>
         </main>
         {addSheet}
       </>
@@ -157,6 +161,8 @@ export default function AllTasksPage() {
             </div>
           </section>
         ))}
+
+        <RecentlyDeleted />
       </main>
 
       {active && activeTask && (
