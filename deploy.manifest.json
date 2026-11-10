@@ -12,8 +12,18 @@
   },
   "postDeploy": {
     "criticalRoutes": [
-      { "path": "/", "expect": [200] },
-      { "path": "/ingest/flags/?v=2", "expect": [200] }
+      {
+        "path": "/",
+        "expect": [
+          200
+        ]
+      },
+      {
+        "path": "/ingest/flags/?v=2",
+        "expect": [
+          200
+        ]
+      }
     ],
     "requiredEnv": [
       "CONVEX_DEPLOY_KEY",
@@ -26,8 +36,23 @@
     "prodDeployment": "giddy-eagle-641",
     "prodDeploy": "runs inside build:vercel on Vercel Production, only when CONVEX_DEPLOY_KEY is set",
     "deployKeyEnv": "CONVEX_DEPLOY_KEY",
-    "requiredConvexEnv": [],
-    "verify": "bunx convex function-spec --prod"
+    "requiredConvexEnv": [
+      "BETTER_AUTH_SECRET",
+      "SITE_URL",
+      "ALLOWED_EMAILS"
+    ],
+    "verify": "bunx convex function-spec --prod",
+    "optionalConvexEnv": [
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "MICROSOFT_CLIENT_ID",
+      "MICROSOFT_CLIENT_SECRET",
+      "MICROSOFT_TENANT_ID",
+      "TRUSTED_ORIGINS"
+    ],
+    "devOnlyConvexEnv": [
+      "DEV_TOOLS"
+    ]
   },
   "gate": {
     "command": "CI: Quality gate and PR hygiene / checks, then the Mergify queue"
@@ -40,6 +65,10 @@
     {
       "id": "preview-key",
       "rule": "Keep CONVEX_DEPLOY_KEY in the Production env only. In Preview it would let every preview build deploy Convex production."
+    },
+    {
+      "id": "dev-tools-prod",
+      "rule": "Never set DEV_TOOLS on the Convex production deployment. It lets any signed-in user wipe and reseed their own data from the dev data dock."
     }
   ]
 }
