@@ -1,4 +1,4 @@
-# After each production deploy, check that every production URL can reach auth.
+# After each production deploy, check that the public production URL can reach auth.
 # A wrong SITE_URL or TRUSTED_ORIGINS on the production Convex deployment fails
 # every sign-in and sign-up with 403 INVALID_ORIGIN, and nothing else catches it.
 name: Auth origin
@@ -16,5 +16,6 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
-      - name: Check production origins
-        run: node scripts/check-auth-origin.mjs https://todo-kappa-eight-48.vercel.app https://todo-big-minds-tiny-hands.vercel.app
+      # The other production aliases sit behind Vercel SSO, so only this one is public.
+      - name: Check the production origin
+        run: node scripts/check-auth-origin.mjs https://todo-kappa-eight-48.vercel.app
