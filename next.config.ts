@@ -1,5 +1,6 @@
 import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
+import { posthogRewrites } from "./lib/posthog";
 import { SENTRY_ORG, SENTRY_PROJECT, SENTRY_TUNNEL_ROUTE } from "./lib/sentry";
 
 const nextConfig: NextConfig = {
@@ -9,6 +10,11 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_APP_ENVIRONMENT:
       process.env.NEXT_PUBLIC_APP_ENVIRONMENT || process.env.VERCEL_ENV || "development",
+  },
+  // PostHog's API paths end in a slash; a redirect would drop the request body.
+  skipTrailingSlashRedirect: true,
+  async rewrites() {
+    return posthogRewrites;
   },
   turbopack: {
     rules: {
