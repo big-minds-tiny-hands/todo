@@ -2,23 +2,22 @@
 
 import { useQuery } from "convex/react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { AddTaskSheet } from "@/components/add-task-sheet";
-import { ChevronRight, ListIcon, PlusIcon, SunIcon, TrashIcon } from "@/components/icons";
+import { CheckIcon, ChevronRight, ListIcon, PlusIcon, SunIcon, TrashIcon } from "@/components/icons";
 import { RecentlyDeleted } from "@/components/tasks/recently-deleted";
 import { SwipeRow } from "@/components/swipe-row";
 import { DaySheet } from "@/components/tasks/day-sheet";
 import { TaskActionsMenu, useAddToToday, useDeleteTask } from "@/components/tasks/task-actions-menu";
 import { TimeSheet } from "@/components/tasks/time-sheet";
-import { creationDay, daysBetween, type Task } from "@/components/tasks/when";
-import { Avatar, PRIORITY_LABEL, PriorityDot } from "@/components/ui-todo";
+import { PriorityGroups } from "@/components/tasks/priority-groups";
+import { creationDay, dayLabel, daysBetween, slotLabel, type Task } from "@/components/tasks/when";
+import { Avatar, PRIORITY_LABEL } from "@/components/ui-todo";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useToday } from "@/hooks/use-today";
 import { authClient } from "@/lib/auth-client";
 import { clockLabel, shortDate } from "@/lib/day";
-
-const PRIORITIES = ["high", "normal", "low"] as const;
 
 /** Which task's actions are open, and which surface: the menu or one of its sheets. */
 type Active = { id: Id<"tasks">; anchor: Element; panel: "menu" | "day" | "time" };
@@ -33,17 +32,40 @@ function addedLabel(task: Task, today: string) {
   return "Added over a month ago";
 }
 
+/** "Added today · 9:00 AM" for a task in the pool. */
 function metaFor(task: Task, today: string, yesterday: string) {
-  if (task.plannedDay) return [shortDate(task.plannedDay), task.startTime && clockLabel(task.startTime)].filter(Boolean).join(" · ");
+  return [baseMeta(task, today, yesterday), task.startTime && clockLabel(task.startTime)].filter(Boolean).join(" · ");
+}
+
+function baseMeta(task: Task, today: string, yesterday: string) {
   if (task.missedDay) return task.missedDay === yesterday ? "Missed yesterday" : task.missedDay === today ? "Missed today" : `Missed ${shortDate(task.missedDay)}`;
   if (task.todayDay === yesterday) return "Back from yesterday";
   if (task.checklist.length > 0) return `Checklist ${task.checklist.filter((s) => s.done).length}/${task.checklist.length}`;
   return addedLabel(task, today);
 }
 
+/** Planned tasks in runs of one day each, in the order given. */
+function byDay(tasks: Task[]) {
+  const days = new Map<string, Task[]>();
+  for (const task of tasks) days.set(task.plannedDay!, [...(days.get(task.plannedDay!) ?? []), task]);
+  return [...days];
+}
+
+function CompletedRow({ count }: { count: number | undefined }) {
+  return (
+    <Link className="row" href="/tasks/completed">
+      <CheckIcon style={{ color: "var(--lime-tx)" }} />
+      <span className="t">Completed</span>
+      {count !== undefined && <span className="v num">{count >= 100 ? "100+" : count}</span>}
+      <ChevronRight style={{ color: "var(--tx3)" }} />
+    </Link>
+  );
+}
+
 export default function AllTasksPage() {
   const { today, yesterday } = useToday();
   const data = useQuery(api.tasks.all, { today });
+  const completed = useQuery(api.tasks.completed);
   const { data: session } = authClient.useSession();
   const [adding, setAdding] = useState(false);
   const [active, setActive] = useState<Active | null>(null);
@@ -53,7 +75,9 @@ export default function AllTasksPage() {
 
   if (data === undefined) return <AllTasksLoading name={name} />;
 
-  if (data.pool.length === 0) {
+  const listed = data.pool.length + data.planned.length;
+
+  if (listed === 0) {
     return (
       <>
         <header className="head">
@@ -88,7 +112,12 @@ export default function AllTasksPage() {
             <PlusIcon style={{ strokeWidth: 2.4 }} />
             Add a task
           </button>
-          <div style={{ width: "100%", textAlign: "left", marginTop: 12 }}>
+          <div style={{ width: "100%", textAlign: "left", marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+            {completed && completed.length > 0 && (
+              <div className="card">
+                <CompletedRow count={completed.length} />
+              </div>
+            )}
             <RecentlyDeleted />
           </div>
         </main>
@@ -97,11 +126,18 @@ export default function AllTasksPage() {
     );
   }
 
-  const groups = PRIORITIES.map((priority) => ({ priority, items: data.pool.filter((t) => t.priority === priority) })).filter(
-    (g) => g.items.length > 0,
+  const activeTask = active ? [...data.pool, ...data.planned].find((t) => t._id === active.id) : undefined;
+  // Move up and down reorder within a priority group of the pool. Planned tasks sort by day and time instead.
+  const activeGroup = activeTask && data.pool.includes(activeTask) ? data.pool.filter((t) => t.priority === activeTask.priority) : [];
+  const row = (task: Task, meta: string) => (
+    <TaskRow
+      task={task}
+      today={today}
+      meta={meta}
+      highlighted={active?.id === task._id && active.panel === "menu"}
+      onActions={(anchor) => setActive({ id: task._id, anchor, panel: "menu" })}
+    />
   );
-  const activeTask = active ? data.pool.find((t) => t._id === active.id) : undefined;
-  const activeGroup = activeTask ? groups.find((g) => g.priority === activeTask.priority)?.items : undefined;
   const close = (open: boolean) => {
     if (!open) setActive(null);
   };
@@ -111,7 +147,7 @@ export default function AllTasksPage() {
       <header className="head">
         <div>
           <p className="eyebrow num">
-            {data.pool.length} {data.pool.length === 1 ? "task" : "tasks"}
+            {listed} {listed === 1 ? "task" : "tasks"}
           </p>
           <h1 className="h1">All tasks</h1>
         </div>
@@ -128,36 +164,39 @@ export default function AllTasksPage() {
           </span>
         </button>
 
-        <Link className="card row" href="/">
-          <SunIcon style={{ color: "var(--lime-tx)" }} />
-          <span className="t">On Today</span>
-          <span className="v num">{data.onTodayCount}</span>
-          <ChevronRight style={{ color: "var(--tx3)" }} />
-        </Link>
+        <div className="card">
+          <Link className="row" href="/">
+            <SunIcon style={{ color: "var(--lime-tx)" }} />
+            <span className="t">On Today</span>
+            <span className="v num">{data.onTodayCount}</span>
+            <ChevronRight style={{ color: "var(--tx3)" }} />
+          </Link>
+          <CompletedRow count={completed?.length} />
+        </div>
 
-        {groups.map((g) => (
-          <section key={g.priority}>
-            <h2 className="label">
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <PriorityDot priority={g.priority} />
-                {PRIORITY_LABEL[g.priority]}
-              </span>
-              <span className="num">{g.items.length}</span>
+        <PriorityGroups tasks={data.pool}>{(task) => row(task, metaFor(task, today, yesterday))}</PriorityGroups>
+
+        {data.planned.length > 0 && (
+          <section className="stack">
+            <h2 className="stitle">
+              <span>Planned</span>
+              <span className="num">{data.planned.length}</span>
             </h2>
-            <div className="card">
-              {g.items.map((task) => (
-                <TaskRow
-                  key={task._id}
-                  task={task}
-                  today={today}
-                  meta={metaFor(task, today, yesterday)}
-                  highlighted={active?.id === task._id && active.panel === "menu"}
-                  onActions={(anchor) => setActive({ id: task._id, anchor, panel: "menu" })}
-                />
-              ))}
-            </div>
+            {byDay(data.planned).map(([day, tasks]) => (
+              <section key={day}>
+                <h3 className="label">
+                  <span>{dayLabel(day, today)}</span>
+                  <span className="num">{tasks.length}</span>
+                </h3>
+                <div className="card">
+                  {tasks.map((task) => (
+                    <Fragment key={task._id}>{row(task, [PRIORITY_LABEL[task.priority], slotLabel(task)].filter(Boolean).join(" · "))}</Fragment>
+                  ))}
+                </div>
+              </section>
+            ))}
           </section>
-        ))}
+        )}
 
         <RecentlyDeleted />
       </main>
@@ -172,8 +211,8 @@ export default function AllTasksPage() {
             anchor={active.anchor}
             onPickDay={() => setActive({ ...active, panel: "day" })}
             onPickTime={() => setActive({ ...active, panel: "time" })}
-            canMoveUp={activeGroup?.[0]?._id !== activeTask._id}
-            canMoveDown={activeGroup?.[activeGroup.length - 1]?._id !== activeTask._id}
+            canMoveUp={activeGroup.length > 0 && activeGroup[0]._id !== activeTask._id}
+            canMoveDown={activeGroup.length > 0 && activeGroup[activeGroup.length - 1]._id !== activeTask._id}
           />
           <DaySheet task={activeTask} today={today} open={active.panel === "day"} onOpenChange={close} />
           <TimeSheet task={activeTask} open={active.panel === "time"} onOpenChange={close} />
