@@ -26,8 +26,9 @@ export function TodayHeader({ today, title = "Today", children }: { today: strin
 
 export function AddButton({ onClick }: { onClick: () => void }) {
   return (
-    <button type="button" className="iconbtn" aria-label="Add a task" onClick={onClick}>
+    <button type="button" className="btn sec add" onClick={onClick}>
       <PlusIcon />
+      Add task
     </button>
   );
 }
@@ -215,14 +216,23 @@ export function ScheduleSection({ schedule, minutes, onCheck }: { schedule: Task
   );
 }
 
-export function GoalsSection({ goals, today, prefs }: { goals: GoalRow[]; today: string; prefs: RewardPrefs }) {
+/** With `invite`, a day with no goals shows a link to add one instead of nothing. */
+export function GoalsSection({ goals, today, prefs, invite }: { goals: GoalRow[]; today: string; prefs: RewardPrefs; invite?: boolean }) {
   const setMet = useMutation(api.goals.setMet).withOptimisticUpdate((store, { id, today: day, met }) => {
     for (const { args, value } of store.getAllQueries(api.goals.forDay)) {
       if (!value || args.today !== day) continue;
       store.setQuery(api.goals.forDay, args, value.map((r) => (r.goal._id === id ? { ...r, met } : r)));
     }
   });
-  if (goals.length === 0) return null;
+  if (goals.length === 0) {
+    if (!invite) return null;
+    return (
+      <Link className="link" href="/settings/goals/new" style={{ gridArea: "goals", margin: "-8px 4px 0" }}>
+        <PlusIcon size={18} />
+        Add a daily goal
+      </Link>
+    );
+  }
   const metCount = goals.filter((r) => r.met).length;
 
   function check({ goal }: GoalRow, met: boolean) {
@@ -242,15 +252,20 @@ export function GoalsSection({ goals, today, prefs }: { goals: GoalRow[]; today:
     <section style={{ gridArea: "goals" }}>
       <h2 className="label">
         <span>Daily goals</span>
-        {metCount === goals.length ? (
-          <b className="num" style={{ color: "var(--lime-tx)" }}>
-            {metCount} of {goals.length} met
-          </b>
-        ) : (
-          <span className="num">
-            {metCount} of {goals.length} met
-          </span>
-        )}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
+          {metCount === goals.length ? (
+            <b className="num" style={{ color: "var(--lime-tx)" }}>
+              {metCount} of {goals.length} met
+            </b>
+          ) : (
+            <span className="num">
+              {metCount} of {goals.length} met
+            </span>
+          )}
+          <Link className="label-link" href="/settings/goals">
+            Manage
+          </Link>
+        </span>
       </h2>
       <div className="card">
         {goals.map((row) => (

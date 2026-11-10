@@ -96,6 +96,7 @@ export function TodayScreen() {
         <>
           <TodayHeader today={today}>
             <StreakPill streak={streak} short />
+            <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
           <main className="scroll cols" style={{ gridTemplateAreas: "'banner goals' 'plan goals'" }}>
@@ -127,9 +128,15 @@ export function TodayScreen() {
       body = (
         <>
           <TodayHeader today={today} title="Plan today">
+            <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
-          <PlanBody today={today} onToday={[...view.today].sort(byPriority)} onCheck={onCheck} />
+          <PlanBody
+            today={today}
+            onToday={[...view.today].sort(byPriority)}
+            onCheck={onCheck}
+            goals={<GoalsSection goals={view.goals} today={today} prefs={view.data.settings} invite />}
+          />
         </>
       );
       break;
@@ -209,7 +216,17 @@ export function TodayScreen() {
   );
 }
 
-function PlanBody({ today, onToday, onCheck }: { today: string; onToday: Task[]; onCheck: (task: Task, done: boolean) => void }) {
+function PlanBody({
+  today,
+  onToday,
+  onCheck,
+  goals,
+}: {
+  today: string;
+  onToday: Task[];
+  onCheck: (task: Task, done: boolean) => void;
+  goals: ReactNode;
+}) {
   const all = useQuery(api.tasks.all, { today });
   const addToToday = useMutation(api.tasks.addToToday);
   const removeFromToday = useMutation(api.tasks.removeFromToday);
@@ -244,6 +261,7 @@ function PlanBody({ today, onToday, onCheck }: { today: string; onToday: Task[];
             </PriorityGroups>
           </section>
         )}
+        {goals}
         {pool.length > 0 && (
           <section className="stack">
             <h2 className="stitle">

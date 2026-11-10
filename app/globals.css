@@ -166,6 +166,7 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 .lime-tx { color: var(--lime-tx); }
 .label { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--tx2); margin: 0 4px 8px; letter-spacing: 0.01em; }
 .label b { color: var(--tx); font-weight: 600; }
+.label-link { color: var(--tx); text-decoration: none; min-height: 44px; margin: -14px 0; display: inline-flex; align-items: center; }
 /* A titled section that holds several labelled groups, such as Planned on All tasks. */
 .stack { display: flex; flex-direction: column; gap: 16px; }
 .stitle { display: flex; align-items: baseline; justify-content: space-between; font-family: var(--fd); font-size: 17px; font-weight: 600; margin: 4px 4px -4px; }
@@ -269,6 +270,9 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 .btn.full { width: 100%; }
 .btn.sm { height: 40px; border-radius: 12px; font-size: 14px; padding: 0 14px; }
 .btn.lg { height: 64px; font-size: 18px; border-radius: 20px; }
+/* Header add button: a 44px target that fits beside the ring and the avatar on a 390px phone. */
+.btn.add { height: 44px; border-radius: 14px; padding: 0 14px 0 10px; font-size: 15px; gap: 6px; }
+.btn.add .i { width: 20px; height: 20px; }
 .btn[disabled] { opacity: 0.5; cursor: default; transform: none; }
 .iconbtn { width: 44px; height: 44px; border-radius: 14px; background: var(--s2); border: 1px solid var(--line); display: grid; place-items: center; color: var(--tx); padding: 0; flex: none; text-decoration: none; }
 .iconbtn.ghost { background: none; border-color: transparent; color: var(--tx2); }

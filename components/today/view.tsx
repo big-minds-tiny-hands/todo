@@ -13,7 +13,7 @@ export type TodayView =
   | { kind: "loading" }
   | { kind: "firstRun" }
   | { kind: "newDay"; data: TodayData; goals: GoalRow[]; planned: Task[] }
-  | { kind: "plan"; data: TodayData; today: Task[] }
+  | { kind: "plan"; data: TodayData; goals: GoalRow[]; today: Task[] }
   | { kind: "focus"; data: TodayData; goals: GoalRow[] }
   | { kind: "nextSet"; data: TodayData; open: Task[] }
   | { kind: "dayWon"; data: TodayData; goals: GoalRow[] };
@@ -33,13 +33,13 @@ export function deriveView(
   if (!data.hasAnyTask && goals.length === 0) return { kind: "firstRun" };
   const open = openToday(data);
   if (data.focus.some((t) => !t.done)) return { kind: "focus", data, goals };
-  if (planning) return { kind: "plan", data, today: open };
+  if (planning) return { kind: "plan", data, goals, today: open };
   const fresh = data.focusSet === 0 && data.doneToday.length === 0;
   if (fresh && data.returnedCount > 0 && data.settings.newDayBannerSeen !== today) {
     return { kind: "newDay", data, goals, planned: open };
   }
   if (fresh || (open.length === 0 && data.doneToday.length < data.settings.dailyTarget)) {
-    return { kind: "plan", data, today: open };
+    return { kind: "plan", data, goals, today: open };
   }
   if (open.length === 0) return { kind: "dayWon", data, goals };
   return { kind: "nextSet", data, open };
