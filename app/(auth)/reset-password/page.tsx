@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
 import { AlertIcon, SpinnerIcon } from "@/components/icons";
 import { authClient } from "@/lib/auth-client";
+import { unexpectedAuthError } from "@/lib/auth-error";
 
 export default function ResetPasswordPage() {
   return (
@@ -29,7 +30,9 @@ function ResetPassword() {
     const { error } = await authClient.resetPassword({ newPassword: password, token });
     setBusy(false);
     if (error) {
-      setError(error.status === 429 ? "Too many tries. Wait a few minutes, then try again." : "This reset link has expired or was already used. Get a new one below.");
+      if (error.status === 429) setError("Too many tries. Wait a few minutes, then try again.");
+      else if (error.status === 400) setError("This reset link has expired or was already used. Get a new one below.");
+      else setError(unexpectedAuthError("reset-password", error));
       return;
     }
     router.replace("/sign-in?reset=1");

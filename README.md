@@ -49,7 +49,7 @@ Convex env vars (set with `bunx convex env set NAME value`, add `--prod` for pro
 | --- | --- | --- |
 | `BETTER_AUTH_SECRET` | yes | `openssl rand -base64 32`, a different value per deployment |
 | `SITE_URL` | yes | The app origin: `http://localhost:3001` on dev, `https://todo-kappa-eight-48.vercel.app` on production |
-| `TRUSTED_ORIGINS` | no | Extra origins allowed to call auth, such as a Vercel preview URL |
+| `TRUSTED_ORIGINS` | production | Other origins allowed to call auth, comma separated. On production, `https://todo-big-minds-tiny-hands.vercel.app`. `node scripts/check-auth-origin.mjs <origin>...` checks them |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | no | From a Google Cloud OAuth client (Web application). Authorized redirect URI: `<SITE_URL>/api/auth/callback/google` |
 | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` | no | From a Microsoft Entra app registration (Web platform). Redirect URI: `<SITE_URL>/api/auth/callback/microsoft` |
 | `MICROSOFT_TENANT_ID` | no | `common` (default) allows any Microsoft account. The Big Minds Tiny Hands tenant ID allows only work accounts |

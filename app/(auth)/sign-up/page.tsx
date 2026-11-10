@@ -6,14 +6,15 @@ import { useState, type FormEvent } from "react";
 import { AlertIcon, Logo, SpinnerIcon } from "@/components/icons";
 import { SocialSignIn } from "@/components/social-sign-in";
 import { authClient } from "@/lib/auth-client";
+import { unexpectedAuthError } from "@/lib/auth-error";
 
 type SignUpError = { field: "email" | "password" | "form"; message: string };
 
-function signUpError(status: number, code: string | undefined): SignUpError {
-  if (status === 422 || code?.startsWith("USER_ALREADY_EXISTS")) return { field: "email", message: "This email already has an account. Sign in instead." };
-  if (code === "PASSWORD_TOO_SHORT") return { field: "password", message: "Use at least 8 characters for your password." };
-  if (status === 429) return { field: "form", message: "Too many tries. Wait a few minutes, then try again." };
-  return { field: "form", message: "Could not reach Todo. Check your connection and try again." };
+function signUpError(error: { status: number; code?: string }): SignUpError {
+  if (error.status === 422 || error.code?.startsWith("USER_ALREADY_EXISTS")) return { field: "email", message: "This email already has an account. Sign in instead." };
+  if (error.code === "PASSWORD_TOO_SHORT") return { field: "password", message: "Use at least 8 characters for your password." };
+  if (error.status === 429) return { field: "form", message: "Too many tries. Wait a few minutes, then try again." };
+  return { field: "form", message: unexpectedAuthError("sign-up", error) };
 }
 
 function ErrorText({ id, message }: { id: string; message: string }) {
@@ -40,7 +41,7 @@ export default function SignUpPage() {
     const { error } = await authClient.signUp.email({ name: name.trim(), email: email.trim(), password });
     if (error) {
       setBusy(false);
-      setError(signUpError(error.status, error.code));
+      setError(signUpError(error));
       return;
     }
     router.replace("/");

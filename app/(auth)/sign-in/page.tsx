@@ -6,6 +6,7 @@ import { Suspense, useState, type FormEvent } from "react";
 import { AlertIcon, Logo, SpinnerIcon } from "@/components/icons";
 import { SocialSignIn, socialErrorMessage } from "@/components/social-sign-in";
 import { authClient } from "@/lib/auth-client";
+import { unexpectedAuthError } from "@/lib/auth-error";
 
 export default function SignInPage() {
   return (
@@ -15,10 +16,10 @@ export default function SignInPage() {
   );
 }
 
-function signInErrorMessage(status: number): string {
-  if (status === 401 || status === 400) return "That email and password don't match. Try again, or reset your password.";
-  if (status === 429) return "Too many tries. Wait a minute, then try again.";
-  return "Could not reach Todo. Check your connection and try again.";
+function signInErrorMessage(error: { status: number; code?: string }): string {
+  if (error.status === 401 || error.status === 400) return "That email and password don't match. Try again, or reset your password.";
+  if (error.status === 429) return "Too many tries. Wait a minute, then try again.";
+  return unexpectedAuthError("sign-in", error);
 }
 
 function SignIn() {
@@ -39,7 +40,7 @@ function SignIn() {
     const { error } = await authClient.signIn.email({ email: email.trim(), password });
     if (error) {
       setBusy(false);
-      setError(signInErrorMessage(error.status));
+      setError(signInErrorMessage(error));
       return;
     }
     router.replace(next);
