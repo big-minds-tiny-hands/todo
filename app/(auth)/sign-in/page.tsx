@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { AlertIcon, Logo, SpinnerIcon } from "@/components/icons";
 import { SocialSignIn, socialErrorMessage } from "@/components/social-sign-in";
 import { authClient } from "@/lib/auth-client";
@@ -38,6 +38,12 @@ function SignIn() {
   const passwordChanged = params.get("reset") === "1";
   const nextParam = params.get("next");
   const next = nextParam && nextParam.startsWith("/") ? nextParam : "/";
+
+  // A visitor who still has a session (sent here while offline, or by an old tab) goes straight back.
+  const { data: session } = authClient.useSession();
+  useEffect(() => {
+    if (session) router.replace(next);
+  }, [session, next, router]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
