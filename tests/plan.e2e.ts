@@ -23,8 +23,9 @@ test('a task finished from the plan stays in sight and the plan keeps its pick l
     await screen.getByLabel('Task').fill(title);
     await screen.getByRole('button', 'Add task').tap();
   }
-  await expect(screen.getByText('Added to All tasks')).toBeVisible();
   await screen.getByRole('button', 'Close').tap();
+  await expect(screen.getByText(NEXT)).toBeVisible();
+  await expect(screen.getByText(LATER)).toBeVisible();
 
   await screen.getByRole('link', 'Today').tap();
   await expect(screen.getByRole('heading', 'Plan today')).toBeVisible();
