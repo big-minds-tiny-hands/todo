@@ -1,0 +1,62 @@
+# PR quality gate. The org standard (big-minds-tiny-hands/.github CI-STANDARD.md)
+# runs the full gate once on the PR, and the single-step Mergify queue merges an
+# up-to-date PR without a second run, so there is no push-to-main trigger.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality gate
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The exact key rarely hits because the SHA changes per commit; the
+      # lockfile-scoped restore key does the work.
+      - name: Restore Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ github.sha }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('bun.lock') }}-
+
+      - name: Required checks exist
+        # A required check that no job produces holds every PR in the queue
+        # forever (CI-STANDARD rule 7).
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/check-required-checks.mjs --repo big-minds-tiny-hands/todo
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Build
+        run: bun run build
