@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
+import { Pwa } from "@/components/pwa";
+import { ThemeColor } from "@/components/theme-color";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -18,6 +20,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F5F5F1" },
     { media: "(prefers-color-scheme: dark)", color: "#0D0E11" },
@@ -31,6 +34,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Providers>
           {children}
           <Toaster position="bottom-center" offset={24} mobileOffset={{ bottom: 96 }} toastOptions={{ unstyled: true }} />
+          <Pwa />
+          <ThemeColor />
         </Providers>
       </body>
     </html>
