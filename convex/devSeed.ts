@@ -25,7 +25,8 @@ type TaskSeed = {
   notes?: string;
   steps?: [string, boolean][];
 };
-type GoalSeed = { title: string; detail?: string; target: number; count: number; days?: number[]; paused?: boolean; history?: number[] };
+/** `met` is today; `history` is the days before it, newest first. */
+type GoalSeed = { title: string; detail?: string; met: boolean; days?: number[]; paused?: boolean; history?: boolean[] };
 
 function addDays(base: string, n: number) {
   const [y, m, d] = base.split("-").map(Number);
@@ -52,8 +53,8 @@ const DEMO: { tasks: TaskSeed[]; goals: GoalSeed[]; streakDays: number } = {
     { title: "Order office supplies", priority: "low" },
   ],
   goals: [
-    { title: "Staff a case", detail: "10-hour case", target: 1, count: 0, history: [1, 1, 1, 1] },
-    { title: "Get 2 tours", target: 2, count: 1, history: [1, 2, 2, 1] },
+    { title: "Staff a case", detail: "10-hour case", met: false, history: [true, true, true, true] },
+    { title: "Get 2 tours", met: false, history: [false, true, true, false] },
   ],
 };
 
@@ -83,9 +84,9 @@ const WORST: { tasks: TaskSeed[]; goals: GoalSeed[]; streakDays: number } = {
     { title: "Paramètres de confidentialité et de sécurité", priority: "low", plannedOffset: 14 },
   ],
   goals: [
-    { title: "Staff a case", detail: "10-hour case", target: 1, count: 1, history: [1, 1, 1, 1] },
-    { title: "Follow up with every family on the waitlist before the end of the day", detail: "At least one call or text per family, logged in the CRM, including the families who asked for evenings", target: 12, count: 7, history: [12, 9, 12, 3] },
-    { title: "Get 2 tours", target: 2, count: 0, history: [0, 0, 1, 2] },
+    { title: "Staff a case", detail: "10-hour case", met: true, history: [true, true, true, true] },
+    { title: "Follow up with every family on the waitlist before the end of the day", detail: "At least one call or text per family, logged in the CRM, including the families who asked for evenings", met: false, history: [true, false, true, false] },
+    { title: "Get 2 tours", met: false, history: [false, false, false, true] },
   ],
 };
 
@@ -95,7 +96,7 @@ const ONE: { tasks: TaskSeed[]; goals: GoalSeed[]; streakDays: number } = {
     { title: "Send weekly staffing update", priority: "high", today: true, focusSlot: 0 },
     { title: "Update tour calendar" },
   ],
-  goals: [{ title: "Staff a case", target: 1, count: 0, history: [1] }],
+  goals: [{ title: "Staff a case", met: false, history: [true] }],
 };
 
 async function clearAccount(ctx: MutationCtx, userId: string) {
@@ -168,14 +169,13 @@ async function insertSet(
       userId,
       title: g.title,
       detail: g.detail,
-      target: g.target,
       days: g.days ?? WEEKDAYS,
       paused: !!g.paused,
       order: i,
     });
-    if (g.count > 0) await ctx.db.insert("goalLogs", { userId, goalId, day: today, count: g.count });
-    for (const [j, count] of (g.history ?? []).entries()) {
-      if (count > 0) await ctx.db.insert("goalLogs", { userId, goalId, day: addDays(today, -(j + 1)), count });
+    if (g.met) await ctx.db.insert("goalLogs", { userId, goalId, day: today });
+    for (const [j, met] of (g.history ?? []).entries()) {
+      if (met) await ctx.db.insert("goalLogs", { userId, goalId, day: addDays(today, -(j + 1)) });
     }
   }
 }

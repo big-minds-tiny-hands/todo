@@ -88,7 +88,7 @@ export const wins = query({
         .collect();
       goalTotals.push({
         title: goal.title,
-        total: logs.filter((l) => l.day.startsWith(monthPrefix)).reduce((sum, l) => sum + l.count, 0),
+        total: logs.filter((l) => l.day.startsWith(monthPrefix)).length,
       });
     }
 

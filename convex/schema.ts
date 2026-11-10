@@ -37,7 +37,6 @@ export const goalFields = {
   userId: v.string(),
   title: v.string(),
   detail: v.optional(v.string()),
-  target: v.number(),
   /** Weekdays the goal applies, 0 = Sunday. */
   days: v.array(v.number()),
   paused: v.boolean(),
@@ -52,6 +51,8 @@ export const settingsFields = {
   haptics: v.boolean(),
   confetti: v.boolean(),
   newDayBannerSeen: v.optional(v.string()),
+  /** The user hid the getting-started steps on Today. */
+  gettingStartedHidden: v.optional(v.boolean()),
 };
 
 export default defineSchema({
@@ -60,11 +61,11 @@ export default defineSchema({
     .index("by_user_doneDay", ["userId", "doneDay"])
     .index("by_user_plannedDay", ["userId", "plannedDay"]),
   dailyGoals: defineTable(goalFields).index("by_user", ["userId"]),
+  /** One row per goal per day it was met. No row means not met. */
   goalLogs: defineTable({
     userId: v.string(),
     goalId: v.id("dailyGoals"),
     day: v.string(),
-    count: v.number(),
   })
     .index("by_goal_day", ["goalId", "day"])
     .index("by_user_day", ["userId", "day"]),

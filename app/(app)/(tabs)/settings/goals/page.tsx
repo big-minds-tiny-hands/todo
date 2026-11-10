@@ -11,20 +11,13 @@ import { weekOf } from "@/lib/day";
 
 const WEEKDAYS = WEEK.slice(1, 6);
 
-const BAR_FILL = { met: "var(--lime)", partly: "var(--ring)", none: "var(--s3)" } as const;
-
-type DayState = keyof typeof BAR_FILL;
-
 function listNames(names: string[]) {
   return names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
-function weekLabel(states: DayState[]) {
-  const named = (state: DayState) => listNames(WEEKDAYS.filter((_, i) => states[i] === state).map((d) => d.name));
-  const met = named("met");
-  const partly = named("partly");
-  if (!met && !partly) return "Not met yet this week";
-  return [met && `Met ${met}`, partly && `partly ${partly}`].filter(Boolean).join(", ");
+function weekLabel(met: boolean[]) {
+  const days = listNames(WEEKDAYS.filter((_, i) => met[i]).map((d) => d.name));
+  return days ? `Met ${days}` : "Not met yet this week";
 }
 
 export default function GoalsPage() {
@@ -46,7 +39,6 @@ export default function GoalsPage() {
 
       <main className="scroll" aria-busy={!goals}>
         {goals?.map(({ goal, met, streak }) => {
-          const states = met.map((count): DayState => (count >= goal.target ? "met" : count > 0 ? "partly" : "none"));
           return (
             <Link
               key={goal._id}
@@ -58,7 +50,7 @@ export default function GoalsPage() {
                 <div style={{ minWidth: 0 }}>
                   <div className="h3">{goal.title}</div>
                   <div className="small muted" style={{ marginTop: 4 }}>
-                    {[goal.paused ? "Paused" : daysRule(goal.days), `target ${goal.target}`, goal.detail].filter(Boolean).join(" · ")}
+                    {[goal.paused ? "Paused" : daysRule(goal.days), goal.detail].filter(Boolean).join(" · ")}
                   </div>
                 </div>
                 {streak > 0 && (
@@ -68,10 +60,10 @@ export default function GoalsPage() {
                   </span>
                 )}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 6 }} role="img" aria-label={weekLabel(states)}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 6 }} role="img" aria-label={weekLabel(met)}>
                 {WEEKDAYS.map((d, i) => (
                   <div key={d.name} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                    <span style={{ width: "100%", height: 10, borderRadius: 5, background: BAR_FILL[states[i]] }} />
+                    <span style={{ width: "100%", height: 10, borderRadius: 5, background: met[i] ? "var(--lime)" : "var(--s3)" }} />
                     <span className="small muted">{d.letter}</span>
                   </div>
                 ))}
@@ -80,6 +72,12 @@ export default function GoalsPage() {
           );
         })}
 
+        {goals?.length === 0 && (
+          <p className="muted" style={{ margin: "0 4px", fontSize: 16, lineHeight: 1.5 }}>
+            A daily goal is something you do every day, like making your calls. It comes back each morning on the days you
+            pick, so you can check it off again.
+          </p>
+        )}
         <Link className="card row" href="/settings/goals/new" style={{ borderStyle: "dashed", background: "none", color: "var(--tx2)" }}>
           <PlusIcon style={{ color: "var(--lime-tx)" }} />
           <span className="t" style={{ color: "var(--tx2)" }}>
