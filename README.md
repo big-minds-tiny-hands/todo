@@ -24,6 +24,13 @@ bun run dev -- -p 3012
 
 Convex dev dashboard: https://dashboard.convex.dev/t/bmth/todo/artful-mastiff-968
 
+## Deploy
+
+Each merge to main deploys production on Vercel (project `todo`, team big-minds-tiny-hands). Vercel runs `bun run build:vercel`.
+
+- Production: the env holds `CONVEX_DEPLOY_KEY`, `NEXT_PUBLIC_SENTRY_DSN` and `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN`. With the key set, `convex deploy` builds Next.js against the Convex production deployment, then pushes the Convex functions.
+- Preview: there is no deploy key, so the build is plain `bun run build`. `NEXT_PUBLIC_CONVEX_URL` points it at the Convex dev deployment. Preview builds do not deploy Convex.
+
 ## Telemetry
 
 Sentry reports errors and PostHog reports product usage. Both are off in `next dev` and turn on in a production build once their variable is set. See `.env.example`.

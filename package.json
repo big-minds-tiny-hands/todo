@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:vercel": "if [ -n \"$CONVEX_DEPLOY_KEY\" ]; then convex deploy --cmd 'bun run build'; else bun run build; fi",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit && tsc --noEmit -p convex"
