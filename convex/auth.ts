@@ -1,6 +1,7 @@
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
-import { betterAuth } from "better-auth/minimal";
+import { APIError } from "better-auth/api";
+import { betterAuth, type BetterAuthOptions } from "better-auth/minimal";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
@@ -11,17 +12,51 @@ const DAY = 60 * 60 * 24;
 
 export const authComponent = createClient<DataModel>(components.betterAuth);
 
-/** Sign-up is invite only: an account can be created only for an email in ALLOWED_EMAILS. */
-function allowedEmails(): string[] {
-  return (process.env.ALLOWED_EMAILS ?? "")
+function list(value: string | undefined): string[] {
+  return (value ?? "")
     .split(",")
-    .map((email) => email.trim().toLowerCase())
+    .map((item) => item.trim())
     .filter(Boolean);
+}
+
+/**
+ * Who may create an account, for every sign-in method. ALLOWED_EMAILS holds emails and whole
+ * domains written as "@example.com". It is empty by default, so sign-up is closed until it is set.
+ */
+function canSignUp(email: string) {
+  const address = email.trim().toLowerCase();
+  const domain = address.slice(address.lastIndexOf("@"));
+  return list(process.env.ALLOWED_EMAILS)
+    .map((item) => item.toLowerCase())
+    .some((item) => item === address || (item.startsWith("@") && item === domain));
+}
+
+/** A provider turns on only when both of its credentials are set on the deployment. */
+function socialProviders(): BetterAuthOptions["socialProviders"] {
+  const env = process.env;
+  return {
+    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+      ? { google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET, prompt: "select_account" as const } }
+      : {}),
+    ...(env.MICROSOFT_CLIENT_ID && env.MICROSOFT_CLIENT_SECRET
+      ? {
+          microsoft: {
+            clientId: env.MICROSOFT_CLIENT_ID,
+            clientSecret: env.MICROSOFT_CLIENT_SECRET,
+            tenantId: env.MICROSOFT_TENANT_ID || "common",
+            prompt: "select_account" as const,
+          },
+        }
+      : {}),
+  };
 }
 
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
+    appName: "Todo",
     baseURL: process.env.SITE_URL,
+    // SITE_URL is trusted already. Add Vercel preview or extra origins as a comma list.
+    trustedOrigins: list(process.env.TRUSTED_ORIGINS),
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: true,
@@ -32,19 +67,48 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
         console.log(`[password reset] ${user.email}: ${url}`);
       },
     },
+    socialProviders: socialProviders(),
+    account: {
+      // One person, one account: Google or Microsoft with the same verified email joins the existing account.
+      accountLinking: { enabled: true, trustedProviders: ["google", "microsoft", "email-password"] },
+      encryptOAuthTokens: true,
+    },
     session: {
       // Stay signed in on the phone: 60 days, renewed once a day while in use.
       expiresIn: 60 * DAY,
       updateAge: DAY,
     },
+    rateLimit: {
+      enabled: true,
+      // Convex functions keep no memory between requests, so counts live in the component's rateLimit table.
+      storage: "database",
+      customRules: {
+        "/sign-in/email": { window: 60, max: 5 },
+        "/sign-up/email": { window: 300, max: 5 },
+        "/request-password-reset": { window: 300, max: 3 },
+        "/reset-password": { window: 300, max: 5 },
+      },
+    },
     databaseHooks: {
       user: {
         create: {
           before: async (user) => {
-            if (!allowedEmails().includes(user.email.toLowerCase())) {
-              throw new Error("Sign-up is invite only.");
-            }
+            if (!canSignUp(user.email)) throw new APIError("FORBIDDEN", { code: "SIGN_UP_NOT_ALLOWED", message: "This email can't sign up." });
             return { data: user };
+          },
+        },
+      },
+      session: {
+        create: {
+          after: async (session) => {
+            console.log(`[auth] session created user=${session.userId} ip=${session.ipAddress ?? "?"}`);
+          },
+        },
+      },
+      account: {
+        create: {
+          after: async (account) => {
+            console.log(`[auth] account linked user=${account.userId} provider=${account.providerId}`);
           },
         },
       },

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
 import { AlertIcon, Logo, SpinnerIcon } from "@/components/icons";
+import { SocialSignIn, socialErrorMessage } from "@/components/social-sign-in";
 import { authClient } from "@/lib/auth-client";
 
 export default function SignInPage() {
@@ -14,13 +15,22 @@ export default function SignInPage() {
   );
 }
 
+function signInErrorMessage(status: number): string {
+  if (status === 401 || status === 400) return "That email and password don't match. Try again, or reset your password.";
+  if (status === 429) return "Too many tries. Wait a minute, then try again.";
+  return "Could not reach Todo. Check your connection and try again.";
+}
+
 function SignIn() {
   const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => socialErrorMessage(params.get("error")));
   const [busy, setBusy] = useState(false);
+  const passwordChanged = params.get("reset") === "1";
+  const nextParam = params.get("next");
+  const next = nextParam && nextParam.startsWith("/") ? nextParam : "/";
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -29,11 +39,10 @@ function SignIn() {
     const { error } = await authClient.signIn.email({ email: email.trim(), password });
     if (error) {
       setBusy(false);
-      setError(error.status === 401 || error.status === 400 ? "Email or password is wrong." : (error.message ?? "Could not sign in. Try again."));
+      setError(signInErrorMessage(error.status));
       return;
     }
-    const next = params.get("next");
-    router.replace(next && next.startsWith("/") ? next : "/");
+    router.replace(next);
   }
 
   return (
@@ -45,6 +54,14 @@ function SignIn() {
         </div>
 
         <h1 className="h1">Sign in</h1>
+
+        {passwordChanged && !error && (
+          <p className="banner" role="status" style={{ margin: 0 }}>
+            Password changed. Sign in with your new password.
+          </p>
+        )}
+
+        <SocialSignIn next={next} />
 
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 18 }} aria-busy={busy}>
           <div className="field">
@@ -99,6 +116,13 @@ function SignIn() {
         <Link className="link" href="/forgot-password" style={{ alignSelf: "center" }}>
           Forgot password?
         </Link>
+
+        <p className="muted" style={{ margin: 0, alignSelf: "center" }}>
+          New to Todo?{" "}
+          <Link className="link" href="/sign-up" style={{ display: "inline" }}>
+            Create an account
+          </Link>
+        </p>
       </main>
     </div>
   );

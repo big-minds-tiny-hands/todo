@@ -29,15 +29,14 @@ export default function ForgotPasswordPage() {
           </div>
           <h1 className="h1" style={{ fontSize: 30 }}>Check your email</h1>
           <p className="muted" style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>
-            We sent a reset link to
-            <br />
-            <span style={{ color: "var(--tx)" }}>{sentTo}</span>
+            If <span style={{ color: "var(--tx)", overflowWrap: "anywhere" }}>{sentTo}</span> has an account, a reset link is on its way. It
+            works for one hour.
           </p>
           <Link className="btn sec full" href="/sign-in" style={{ marginTop: 16 }}>
             Back to sign in
           </Link>
           <button className="btn text" onClick={() => send()} disabled={busy}>
-            Send it again
+            Send the link again
           </button>
         </main>
       </div>
