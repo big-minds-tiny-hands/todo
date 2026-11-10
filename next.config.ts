@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    // Every signed-in screen renders only after AuthGate knows the session in the browser, so the
+    // server shell never holds them and implicit validation flags each one. Validate only segments
+    // that opt in with `export const instant = true`.
+    instantInsights: { validationLevel: "manual-warning" },
+  },
   env: {
     NEXT_PUBLIC_APP_ENVIRONMENT:
       process.env.NEXT_PUBLIC_APP_ENVIRONMENT || process.env.VERCEL_ENV || "development",

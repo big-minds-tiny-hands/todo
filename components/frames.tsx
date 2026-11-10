@@ -1,7 +1,7 @@
 "use client";
 
 import { useConvexAuth, useQuery } from "convex/react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
 import { DevDataDock } from "@/components/dev-data-dock";
@@ -13,10 +13,12 @@ import { useToday } from "@/hooks/use-today";
 export function AuthGate({ children }: { children: ReactNode }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const router = useRouter();
-  const pathname = usePathname();
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) router.replace(`/sign-in${pathname !== "/" ? `?next=${encodeURIComponent(pathname)}` : ""}`);
-  }, [isLoading, isAuthenticated, router, pathname]);
+    if (isLoading || isAuthenticated) return;
+    // Read the path here, not with usePathname: the hook would block prerendering of dynamic routes.
+    const path = window.location.pathname;
+    router.replace(`/sign-in${path !== "/" ? `?next=${encodeURIComponent(path)}` : ""}`);
+  }, [isLoading, isAuthenticated, router]);
   if (!isAuthenticated) {
     return (
       <div className="phone" aria-busy="true">
