@@ -2,15 +2,15 @@
 
 import { useMutation } from "convex/react";
 import Link from "next/link";
-import type { CSSProperties, ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { CheckIcon, ClockIcon, ExpandIcon, FlameIcon, PlusIcon, UndoIcon } from "@/components/icons";
+import { CheckIcon, ChevronRight, ClockIcon, ExpandIcon, FlameIcon, PlusIcon, UndoIcon } from "@/components/icons";
 import { SwipeRow, type SwipeAction } from "@/components/swipe-row";
 import { Check } from "@/components/ui-todo";
 import { clockLabel, longDate } from "@/lib/day";
 import { reward, showToast, type RewardPrefs } from "@/lib/reward";
-import { checklistLabel, clockOf, isNow, slotMeta, type GoalRow, type Task } from "./view";
+import { checklistLabel, clockOf, isNow, pickMeta, slotMeta, type GoalRow, type Task } from "./view";
 
 export function TodayHeader({ today, title = "Today", children }: { today: string; title?: string; children: ReactNode }) {
   return (
@@ -64,7 +64,7 @@ function focusMeta(task: Task, { pending, justChecked }: Omit<CheckProps, "onChe
   return null;
 }
 
-export function FocusSection({ focus, streak, ...props }: { focus: Task[]; streak: number } & CheckProps) {
+export function FocusSection({ focus, streak, footer, ...props }: { focus: Task[]; streak: number; footer?: ReactNode } & CheckProps) {
   const done = focus.filter((t) => t.done).length;
   const fresh = props.justChecked !== null && focus.some((t) => t._id === props.justChecked);
   return (
@@ -106,6 +106,7 @@ export function FocusSection({ focus, streak, ...props }: { focus: Task[]; strea
           </SwipeRow>
         );
       })}
+      {footer}
     </section>
   );
 }
@@ -114,6 +115,42 @@ export function FocusSection({ focus, streak, ...props }: { focus: Task[]; strea
 function completeAction(task: Task, onCheck: CheckProps["onCheck"]): SwipeAction | undefined {
   if (task.done) return undefined;
   return { label: "Done", icon: <CheckIcon />, tone: "lime", run: () => onCheck(task, true) };
+}
+
+/**
+ * The rest of Today below a running focus set. Tapping the row opens the tasks in place, with the same check and
+ * swipe as the focus set, instead of leaving the screen.
+ */
+export function MoreToday({ tasks, today, onCheck }: { tasks: Task[]; today: string; onCheck: CheckProps["onCheck"] }) {
+  const [open, setOpen] = useState(false);
+  if (tasks.length === 0) return null;
+  return (
+    <section style={{ gridArea: "more" }}>
+      <button type="button" className="card row more-toggle" aria-expanded={open} aria-controls="more-today" onClick={() => setOpen(!open)}>
+        <span className="t">
+          {tasks.length} more {tasks.length === 1 ? "task" : "tasks"} today
+        </span>
+        <ChevronRight className="more-chevron" />
+      </button>
+      <div id="more-today" className="more-panel" data-open={open || undefined} inert={!open}>
+        <div>
+          <div className="card" style={{ marginTop: 10 }}>
+            {tasks.map((task) => (
+              <SwipeRow key={task._id} right={completeAction(task, onCheck)}>
+                <div className={["task", task.done && "done"].filter(Boolean).join(" ")}>
+                  <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`${task.done ? "Undo" : "Complete"} ${task.title}`} />
+                  <div className="t">
+                    <div className="tt">{task.title}</div>
+                    <div className="m">{pickMeta(task, today)}</div>
+                  </div>
+                </div>
+              </SwipeRow>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function ScheduleSection({ schedule, minutes, onCheck }: { schedule: Task[]; minutes: number; onCheck: CheckProps["onCheck"] }) {
@@ -146,22 +183,18 @@ export function ScheduleSection({ schedule, minutes, onCheck }: { schedule: Task
 }
 
 export function GoalsSection({ goals, today, prefs }: { goals: GoalRow[]; today: string; prefs: RewardPrefs }) {
-  const bump = useMutation(api.goals.bump).withOptimisticUpdate((store, { id, today: day, delta }) => {
+  const setMet = useMutation(api.goals.setMet).withOptimisticUpdate((store, { id, today: day, met }) => {
     for (const { args, value } of store.getAllQueries(api.goals.forDay)) {
       if (!value || args.today !== day) continue;
-      store.setQuery(
-        api.goals.forDay,
-        args,
-        value.map((r) => (r.goal._id === id ? { ...r, count: Math.max(0, Math.min(r.goal.target, r.count + delta)) } : r)),
-      );
+      store.setQuery(api.goals.forDay, args, value.map((r) => (r.goal._id === id ? { ...r, met } : r)));
     }
   });
   if (goals.length === 0) return null;
-  const met = goals.filter((r) => r.count >= r.goal.target).length;
+  const metCount = goals.filter((r) => r.met).length;
 
-  function step({ goal, count }: GoalRow, delta: 1 | -1) {
-    if (delta === 1 && count + 1 === goal.target) {
-      const allMet = met + 1 === goals.length;
+  function check({ goal }: GoalRow, met: boolean) {
+    if (met) {
+      const allMet = metCount + 1 === goals.length;
       reward(prefs, allMet);
       showToast(allMet ? "Every daily goal met today." : `Goal met: ${goal.title}`, {
         lime: true,
@@ -169,64 +202,37 @@ export function GoalsSection({ goals, today, prefs }: { goals: GoalRow[]; today:
         duration: 3000,
       });
     }
-    void bump({ id: goal._id, today, delta });
+    void setMet({ id: goal._id, today, met });
   }
 
   return (
     <section style={{ gridArea: "goals" }}>
       <h2 className="label">
         <span>Daily goals</span>
-        {met === goals.length ? (
+        {metCount === goals.length ? (
           <b className="num" style={{ color: "var(--lime-tx)" }}>
-            {met} of {goals.length} met
+            {metCount} of {goals.length} met
           </b>
         ) : (
           <span className="num">
-            {met} of {goals.length} met
+            {metCount} of {goals.length} met
           </span>
         )}
       </h2>
       <div className="card">
-        {goals.map((row) => {
-          const { goal, count } = row;
-          const isMet = count >= goal.target;
-          return (
-            <div key={goal._id} className="goal">
-              <div className="t" style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 16 }}>{goal.title}</div>
-                {goal.target === 1 ? (
-                  goal.detail && (
-                    <div className="small muted" style={{ marginTop: 2 }}>
-                      {goal.detail}
-                    </div>
-                  )
-                ) : (
-                  <div className="dots" aria-hidden="true">
-                    {Array.from({ length: goal.target }, (_, i) => (
-                      <i key={i} className={i < count ? "on" : undefined} />
-                    ))}
-                  </div>
-                )}
-              </div>
-              {goal.target === 1 ? (
-                <Check checked={isMet} onChange={(next) => step(row, next ? 1 : -1)} label={`Mark ${goal.title} done`} />
-              ) : (
-                <div className="count">
-                  <span className={isMet ? "n met" : "n"}>
-                    {count}/{goal.target}
-                  </span>
-                  {isMet ? (
-                    <Check checked onChange={() => step(row, -1)} label={`${goal.title} met. Take one away`} />
-                  ) : (
-                    <button type="button" className="iconbtn" aria-label={`Add one to ${goal.title}`} onClick={() => step(row, 1)}>
-                      <PlusIcon />
-                    </button>
-                  )}
+        {goals.map((row) => (
+          <div key={row.goal._id} className="goal">
+            <div className="t" style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 16 }}>{row.goal.title}</div>
+              {row.goal.detail && (
+                <div className="small muted" style={{ marginTop: 2 }}>
+                  {row.goal.detail}
                 </div>
               )}
             </div>
-          );
-        })}
+            <Check checked={row.met} onChange={(next) => check(row, next)} label={`${row.met ? "Undo" : "Mark"} ${row.goal.title} done`} />
+          </div>
+        ))}
       </div>
     </section>
   );

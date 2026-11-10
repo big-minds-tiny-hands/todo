@@ -69,14 +69,16 @@ function SignIn() {
             <input
               className="input"
               id="email"
+              name="email"
               type="email"
+              spellCheck={false}
               autoComplete="email"
               inputMode="email"
               required
               disabled={busy}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="you@example.com…"
             />
           </div>
           <div className="field">
@@ -84,6 +86,7 @@ function SignIn() {
             <input
               className={`input${error ? " err" : ""}`}
               id="pw"
+              name="password"
               type="password"
               autoComplete="current-password"
               required
@@ -102,14 +105,8 @@ function SignIn() {
             )}
           </div>
           <button className="btn pri full" type="submit" disabled={busy} style={{ marginTop: 8 }}>
-            {busy ? (
-              <>
-                <SpinnerIcon />
-                Signing in
-              </>
-            ) : (
-              "Sign in"
-            )}
+            {busy && <SpinnerIcon />}
+            Sign in
           </button>
         </form>
 

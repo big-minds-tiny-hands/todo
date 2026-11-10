@@ -48,7 +48,7 @@ export default function CalendarPage() {
       <header className="head">
         <div>
           <p className="eyebrow">{date.getFullYear()}</p>
-          <h1 className="h1">{date.toLocaleDateString("en-US", { month: "long" })}</h1>
+          <h1 className="h1">{date.toLocaleDateString(undefined, { month: "long" })}</h1>
         </div>
         <div className="head-actions">
           <button type="button" className="iconbtn" aria-label="Previous month" onClick={() => goMonth(-1)}>
@@ -76,6 +76,11 @@ export default function CalendarPage() {
             <div className="card" style={{ padding: "32px 20px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12 }}>
               <CalendarIcon size={32} style={{ color: "var(--tx3)" }} />
               <p style={{ margin: 0, fontSize: 16 }}>{canAdd ? "Nothing on this day yet" : "Nothing on this day"}</p>
+              {canAdd && (
+                <p className="small muted" style={{ margin: 0, maxWidth: 300, lineHeight: 1.45 }}>
+                  Tasks you put on a day show up in Today on that day.
+                </p>
+              )}
               {canAdd && (
                 <button type="button" className="btn pri sm" style={{ marginTop: 4 }} onClick={() => setAssigning(true)}>
                   <PlusIcon size={18} style={{ strokeWidth: 2.4 }} />

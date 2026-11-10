@@ -2,6 +2,7 @@
 
 import { useMutation } from "convex/react";
 import { useState } from "react";
+import { TimeField } from "@/components/time-field";
 import { api } from "@/convex/_generated/api";
 import { CheckIcon, PeopleIcon } from "@/components/icons";
 import { Sheet } from "@/components/ui-todo";
@@ -83,21 +84,15 @@ function TimeForm({ task, onDone }: { task: Task; onDone: () => void }) {
             role="radio"
             aria-checked={other}
             style={other ? undefined : { color: "var(--tx2)" }}
-            onClick={() => setOther(true)}
+            onClick={() => {
+              setOther(true);
+              setStart((current) => current ?? "09:00");
+            }}
           >
             Other
           </button>
         </div>
-        {other && (
-          <input
-            className="input"
-            type="time"
-            aria-label="Start time"
-            value={start ?? ""}
-            onChange={(e) => setStart(e.target.value || null)}
-            autoFocus
-          />
-        )}
+        {other && <TimeField value={start ?? "09:00"} onChange={setStart} label="Start time" />}
       </div>
 
       <div className="field">

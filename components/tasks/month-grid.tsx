@@ -26,7 +26,7 @@ export function addMonths(month: string, n: number) {
 }
 
 export function monthLabel(month: string) {
-  return fromDay(month).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  return fromDay(month).toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
 /** Every day the grid shows: whole weeks, Sunday first, 5 or 6 rows. */
@@ -69,7 +69,7 @@ export function monthCells({
 const DOWS = ["S", "M", "T", "W", "T", "F", "S"];
 
 function cellLabel(cell: MonthCell) {
-  const name = fromDay(cell.day).toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  const name = fromDay(cell.day).toLocaleDateString(undefined, { month: "long", day: "numeric" });
   return cell.hasTasks ? `${name}, has tasks` : name;
 }
 

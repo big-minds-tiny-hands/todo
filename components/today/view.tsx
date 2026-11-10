@@ -65,7 +65,7 @@ export function pickMeta(task: Task, today: string) {
 }
 
 export function clockOf(ms: number) {
-  return new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return new Date(ms).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
 /** Minutes since midnight when the time slot ends. A slot with no length ends when it starts. */

@@ -25,7 +25,7 @@ function earnedLabel(day: string | null, today: string) {
   if (!day) return "Earned";
   if (day === today) return "Earned today";
   if (day === addDays(today, -1)) return "Earned yesterday";
-  return `Earned ${fromDay(day).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+  return `Earned ${fromDay(day).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
 }
 
 function milestones(wins: Wins, today: string): Milestone[] {

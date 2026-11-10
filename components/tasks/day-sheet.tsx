@@ -1,12 +1,11 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
-import { ChevronLeft, ChevronRight } from "@/components/icons";
 import { Sheet } from "@/components/ui-todo";
 import { addDays, shortDate } from "@/lib/day";
-import { addMonths, MonthGrid, monthCells, monthLabel, monthOf, monthRange } from "@/components/tasks/month-grid";
+import { DayPicker } from "@/components/tasks/day-picker";
 import { nextMonday, taskDay, type Task } from "@/components/tasks/when";
 
 type DayProps = { task: Task; today: string };
@@ -24,10 +23,7 @@ function DayForm({ task, today, onDone }: DayProps & { onDone: () => void }) {
   const removeFromToday = useMutation(api.tasks.removeFromToday);
   const current = taskDay(task, today) ?? null;
   const [selected, setSelected] = useState<string | null>(current);
-  const [month, setMonth] = useState(monthOf(current ?? today));
   const [busy, setBusy] = useState(false);
-  const planned = useQuery(api.tasks.inRange, monthRange(month));
-  const cells = monthCells({ month, today, selected, busyDays: new Set(planned?.map((t) => t.plannedDay ?? "")) });
 
   const quick = [
     { label: "Today", day: today },
@@ -36,10 +32,7 @@ function DayForm({ task, today, onDone }: DayProps & { onDone: () => void }) {
     { label: "No day", day: null },
   ];
 
-  function pick(day: string | null) {
-    setSelected(day);
-    if (day) setMonth(monthOf(day));
-  }
+  const pick = setSelected;
 
   async function submit(event: { preventDefault(): void }) {
     event.preventDefault();
@@ -69,20 +62,7 @@ function DayForm({ task, today, onDone }: DayProps & { onDone: () => void }) {
         })}
       </div>
 
-      <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <span className="h3">{monthLabel(month)}</span>
-          <div style={{ display: "flex", gap: 4 }}>
-            <button type="button" className="iconbtn ghost" aria-label="Previous month" onClick={() => setMonth(addMonths(month, -1))}>
-              <ChevronLeft />
-            </button>
-            <button type="button" className="iconbtn ghost" aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))}>
-              <ChevronRight />
-            </button>
-          </div>
-        </div>
-        <MonthGrid month={month} cells={cells} onSelect={pick} onMonthSwipe={(delta) => setMonth(addMonths(month, delta))} disablePast dayStyle={{ height: 42 }} />
-      </div>
+      <DayPicker value={selected} onChange={pick} today={today} />
 
       <button type="submit" className="btn pri full" disabled={busy || (selected === null && current === null)}>
         {selected ? `Put on ${shortDate(selected)}` : current ? "Remove day" : "Pick a day"}

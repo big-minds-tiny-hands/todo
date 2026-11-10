@@ -3,14 +3,16 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { Pwa } from "@/components/pwa";
 import { ThemeColor } from "@/components/theme-color";
+import { RouteTitle } from "@/components/route-title";
 import { ToasterHost } from "@/components/toaster-host";
+import { Suspense } from "react";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const grotesk = Space_Grotesk({ variable: "--font-grotesk", subsets: ["latin"], weight: ["500", "600", "700"] });
 
+// No `title` here: RouteTitle owns <title> for every route, and a second metadata title would win after navigation.
 export const metadata: Metadata = {
-  title: "Todo",
   description: "Pick what matters today, then win the day.",
   applicationName: "Todo",
   appleWebApp: { capable: true, title: "Todo", statusBarStyle: "black-translucent" },
@@ -31,6 +33,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} ${grotesk.variable}`} suppressHydrationWarning>
       <body>
+        <a className="skip-link" href="#content">
+          Skip to content
+        </a>
+        <Suspense>
+          <RouteTitle />
+        </Suspense>
         <Providers>
           {children}
           <ToasterHost />

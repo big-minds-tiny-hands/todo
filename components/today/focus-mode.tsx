@@ -38,8 +38,7 @@ export function FocusMode() {
       <Celebration
         moment={moment}
         confetti={data.settings.confetti}
-        onNext={() => leaveTo("/focus/choose")}
-        onWins={() => leaveTo("/wins")}
+        onLeave={clear}
         onClose={() => leaveTo("/")}
       />
     );

@@ -72,12 +72,14 @@ export const today = query({
 /** All open tasks by priority, plus how many of them are on Today. */
 export const all = query({
   args: { today: day },
-  returns: v.object({ tasks: v.array(taskDoc), onTodayCount: v.number() }),
+  returns: v.object({ tasks: v.array(taskDoc), onTodayCount: v.number(), hasAnyTask: v.boolean() }),
   handler: async (ctx, { today }) => {
     const userId = await requireUserId(ctx);
     const open = await openTasks(ctx, userId);
     const onTodayCount = open.filter((t) => isOnDay(t, today)).length;
-    return { tasks: open.filter((t) => !isOnDay(t, today)).sort(byPriority), onTodayCount };
+    // Tells a first visit (nothing ever added) from a cleared list, so each gets its own empty state.
+    const anyTask = open.length > 0 || (await ctx.db.query("tasks").withIndex("by_user_done", (q) => q.eq("userId", userId)).first()) !== null;
+    return { tasks: open.filter((t) => !isOnDay(t, today)).sort(byPriority), onTodayCount, hasAnyTask: anyTask };
   },
 });
 

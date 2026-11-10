@@ -3,7 +3,9 @@
 import { useMutation } from "convex/react";
 import { useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
-import { CalendarIcon, CheckIcon, ClockIcon, SunIcon } from "@/components/icons";
+import { AlertIcon, CalendarIcon, CheckIcon, ClockIcon, CloseIcon, SpinnerIcon, SunIcon } from "@/components/icons";
+import { DayPicker } from "@/components/tasks/day-picker";
+import { TimeField } from "@/components/time-field";
 import { PrioritySeg, Sheet } from "@/components/ui-todo";
 import { showToast } from "@/lib/reward";
 
@@ -36,11 +38,17 @@ function AddTaskForm({ today, defaultWhen = "later", defaultDay }: AddTaskProps)
   const [day, setDay] = useState(defaultDay ?? today);
   const [time, setTime] = useState("");
   const [busy, setBusy] = useState(false);
+  const [missingTitle, setMissingTitle] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
 
   async function submit(event: { preventDefault(): void }) {
     event.preventDefault();
-    if (!title.trim() || busy) return;
+    if (busy) return;
+    if (!title.trim()) {
+      setMissingTitle(true);
+      titleRef.current?.focus();
+      return;
+    }
     setBusy(true);
     try {
       await create({
@@ -71,16 +79,27 @@ function AddTaskForm({ today, defaultWhen = "later", defaultDay }: AddTaskProps)
         </label>
         <input
           ref={titleRef}
-          className="input"
+          className={`input${missingTitle ? " err" : ""}`}
           id="new-task"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="What do you need to do?"
+          onChange={(e) => {
+            setTitle(e.target.value);
+            setMissingTitle(false);
+          }}
+          placeholder="Call back the Lee family…"
+          aria-invalid={missingTitle}
+          aria-describedby={missingTitle ? "new-task-err" : undefined}
           autoComplete="off"
           autoFocus
           enterKeyHint="done"
           style={{ height: 58, fontSize: 18 }}
         />
+        {missingTitle && (
+          <p className="err-text" id="new-task-err" role="alert">
+            <AlertIcon size={18} />
+            Name the task first.
+          </p>
+        )}
       </div>
       <div className="field">
         <span className="fl">Priority</span>
@@ -101,16 +120,28 @@ function AddTaskForm({ today, defaultWhen = "later", defaultDay }: AddTaskProps)
             Pick a day
           </button>
         </div>
-        {when === "day" && <input className="input" type="date" aria-label="Day" value={day} min={today} onChange={(e) => setDay(e.target.value)} />}
+        {when === "day" && <DayPicker value={day} onChange={setDay} today={today} />}
       </div>
       <div className="field">
-        <label htmlFor="new-time" className="fl" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <span className="fl" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           <ClockIcon size={16} />
           Time (optional)
-        </label>
-        <input className="input" id="new-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+        </span>
+        {time ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <TimeField value={time} onChange={setTime} label="Start time" />
+            <button type="button" className="iconbtn ghost" aria-label="Remove time" onClick={() => setTime("")}>
+              <CloseIcon />
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="chip" style={{ alignSelf: "flex-start" }} onClick={() => setTime("09:00")}>
+            Add a time
+          </button>
+        )}
       </div>
-      <button className="btn pri full" type="submit" disabled={!title.trim() || busy} style={{ marginTop: 4 }}>
+      <button className="btn pri full" type="submit" disabled={busy} style={{ marginTop: 4 }}>
+        {busy && <SpinnerIcon />}
         Add task
       </button>
     </form>

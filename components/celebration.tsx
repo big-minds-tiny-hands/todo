@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { CheckIcon, FlameIcon, TrophyIcon } from "@/components/icons";
 
@@ -53,18 +54,17 @@ function StreakTick({ from, to }: { from: number; to: number }) {
 export function Celebration({
   moment,
   confetti,
-  onNext,
-  onWins,
+  onLeave,
   onClose,
 }: {
   moment: Moment;
   confetti: boolean;
-  onNext: () => void;
-  onWins: () => void;
+  /** Runs as a link to another screen is followed, so the moment does not reappear on return. */
+  onLeave: () => void;
   onClose: () => void;
 }) {
   const day = moment.kind === "day";
-  const time = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const time = new Date().toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   return createPortal(
     <div role="dialog" aria-modal="true" aria-labelledby="moment-title" className="moment" style={{ position: "fixed", inset: 0, zIndex: 60, background: "var(--bg)", overflow: "auto" }}>
       {confetti && <Confetti />}
@@ -119,15 +119,15 @@ export function Celebration({
               <button className="btn pri full" onClick={onClose} autoFocus>
                 Keep going
               </button>
-              <button className="btn text full" onClick={onWins}>
+              <Link className="btn text full" href="/wins" onClick={onLeave}>
                 See your wins
-              </button>
+              </Link>
             </>
           ) : (
             <>
-              <button className="btn pri full" onClick={onNext} autoFocus>
+              <Link className="btn pri full" href="/focus/choose" onClick={onLeave} autoFocus>
                 Pick the next focus set
-              </button>
+              </Link>
               <button className="btn text full" onClick={onClose}>
                 Take a break
               </button>

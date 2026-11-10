@@ -47,6 +47,8 @@ export function SwipeRow({ right, left, children }: { right?: SwipeAction; left?
       animate(x, 0, spring(vx));
       return;
     }
+    // Lets one-time swipe tips know the user has found the gesture.
+    window.dispatchEvent(new Event("todo:swiped"));
     if (action.leaves) {
       const out = Math.sign(dx) * width() * 1.05;
       void animate(x, out, { type: "spring", velocity: vx, bounce: 0, duration: 0.3 }).then(() => {

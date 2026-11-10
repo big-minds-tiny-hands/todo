@@ -10,6 +10,7 @@ test('a task added to Today becomes the focus set and finishing it completes the
   await app.open('/tasks');
   await screen.getByRole('button', 'Dev data').tap();
   await screen.getByRole('button', 'Empty').tap();
+  await screen.getByRole('button', 'Close').tap();
   // Navigate in the app: a full reload while the reseed is in flight trips the unsaved-changes guard.
   await screen.getByRole('link', 'Today').tap();
   await expect(screen.getByRole('heading', 'Put everything on your plate here')).toBeVisible();

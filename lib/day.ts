@@ -34,11 +34,11 @@ export function weekOf(day: string): string[] {
 }
 
 export function longDate(day: string): string {
-  return fromDay(day).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+  return fromDay(day).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 }
 
 export function shortDate(day: string): string {
-  return fromDay(day).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return fromDay(day).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
 /** "13:00" → "1:00 PM" */

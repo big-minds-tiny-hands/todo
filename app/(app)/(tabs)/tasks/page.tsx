@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { AddTaskSheet } from "@/components/add-task-sheet";
 import { ChevronRight, ListIcon, PlusIcon, SunIcon, TrashIcon } from "@/components/icons";
+import { OnceHint } from "@/components/onboarding";
 import { SwipeRow } from "@/components/swipe-row";
 import { DaySheet } from "@/components/tasks/day-sheet";
 import { TaskActionsMenu, useAddToToday, useDeleteTask } from "@/components/tasks/task-actions-menu";
@@ -47,7 +48,8 @@ export default function AllTasksPage() {
   const [adding, setAdding] = useState(false);
   const [active, setActive] = useState<Active | null>(null);
   const name = session?.user.name;
-  const addSheet = <AddTaskSheet open={adding} onOpenChange={setAdding} today={today} />;
+  // Keyed so the open sheet survives the switch between the empty and the list layout, keeping what was typed.
+  const addSheet = <AddTaskSheet key="add-task" open={adding} onOpenChange={setAdding} today={today} />;
 
   if (data === undefined) return <AllTasksLoading name={name} />;
 
@@ -56,7 +58,7 @@ export default function AllTasksPage() {
       <>
         <header className="head">
           <div>
-            <p className="eyebrow">All clear</p>
+            <p className="eyebrow">{data.hasAnyTask ? "All clear" : "Start here"}</p>
             <h1 className="h1">All tasks</h1>
           </div>
           <div className="head-actions">
@@ -67,10 +69,21 @@ export default function AllTasksPage() {
           <div className="empty-art">
             <ListIcon />
           </div>
-          <h2 className="h2">Nothing waiting</h2>
-          <p className="muted" style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>
-            Every task is planned or done.
-          </p>
+          {data.hasAnyTask ? (
+            <>
+              <h2 className="h2">Nothing waiting</h2>
+              <p className="muted" style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>
+                Every task is planned or done.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="h2">Everything you need to do goes here</h2>
+              <p className="muted" style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>
+                Add it all, big or small. Each day you pick a few for Today, and the rest waits here by priority.
+              </p>
+            </>
+          )}
           <button type="button" className="btn pri" style={{ marginTop: 12, minWidth: 220 }} onClick={() => setAdding(true)}>
             <PlusIcon style={{ strokeWidth: 2.4 }} />
             Add a task
@@ -111,6 +124,8 @@ export default function AllTasksPage() {
             Add a task
           </span>
         </button>
+
+        <OnceHint id="swipe-tasks">Tip: swipe a task right to put it on Today, or left to delete it.</OnceHint>
 
         <Link className="card row" href="/">
           <SunIcon style={{ color: "var(--lime-tx)" }} />

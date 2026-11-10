@@ -5,19 +5,18 @@ import { ConvexError } from "convex/values";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
-import { Stepper } from "@/components/settings/controls";
 import { WEEK } from "@/components/settings/goal-days";
 import { AlertIcon, CloseIcon, TrashIcon } from "@/components/icons";
 import { Sheet, Toggle } from "@/components/ui-todo";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 
-type GoalDraft = { title: string; detail: string; target: number; days: number[]; paused: boolean };
+type GoalDraft = { title: string; detail: string; days: number[]; paused: boolean };
 
-const NEW_GOAL: GoalDraft = { title: "", detail: "", target: 1, days: [1, 2, 3, 4, 5], paused: false };
+const NEW_GOAL: GoalDraft = { title: "", detail: "", days: [1, 2, 3, 4, 5], paused: false };
 
 function draftOf(goal: Doc<"dailyGoals">): GoalDraft {
-  return { title: goal.title, detail: goal.detail ?? "", target: goal.target, days: goal.days, paused: goal.paused };
+  return { title: goal.title, detail: goal.detail ?? "", days: goal.days, paused: goal.paused };
 }
 
 export default function GoalEditPage() {
@@ -76,7 +75,7 @@ function GoalForm({ goalId, initial }: { goalId?: Id<"dailyGoals">; initial: Goa
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const set = (patch: Partial<GoalDraft>) => setDraft((d) => ({ ...d, ...patch }));
-  const canSave = draft.title.trim() !== "" && draft.days.length > 0 && !busy;
+  const [missing, setMissing] = useState<{ title?: boolean; days?: boolean }>({});
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
@@ -92,13 +91,18 @@ function GoalForm({ goalId, initial }: { goalId?: Id<"dailyGoals">; initial: Goa
 
   function save(event: FormEvent) {
     event.preventDefault();
-    if (!canSave) return;
+    if (busy) return;
+    const problems = { title: draft.title.trim() === "", days: draft.days.length === 0 };
+    setMissing(problems);
+    if (problems.title) return document.getElementById("g-name")?.focus();
+    if (problems.days) return;
     const fields = { ...draft, detail: draft.detail.trim() || undefined };
     void run(() => (goalId ? update({ id: goalId, ...fields }) : create(fields)));
   }
 
   function toggleDay(day: number) {
     set({ days: draft.days.includes(day) ? draft.days.filter((d) => d !== day) : [...draft.days, day].sort((a, b) => a - b) });
+    setMissing((m) => ({ ...m, days: false }));
   }
 
   return (
@@ -108,24 +112,30 @@ function GoalForm({ goalId, initial }: { goalId?: Id<"dailyGoals">; initial: Goa
       <form id="goal-form" className="scroll" style={{ gap: 24, paddingTop: 12 }} onSubmit={save}>
         <div className="field">
           <label htmlFor="g-name">Goal</label>
-          <input className="input" id="g-name" placeholder="Staff a case" value={draft.title} onChange={(e) => set({ title: e.target.value })} autoFocus={!goalId} />
+          <input
+            className={`input${missing.title ? " err" : ""}`}
+            id="g-name"
+            placeholder="Make the morning calls…"
+            value={draft.title}
+            onChange={(e) => {
+              set({ title: e.target.value });
+              setMissing((m) => ({ ...m, title: false }));
+            }}
+            aria-invalid={missing.title}
+            aria-describedby={missing.title ? "g-name-err" : undefined}
+            autoFocus={!goalId}
+          />
+          {missing.title && (
+            <p className="err-text" id="g-name-err" role="alert">
+              <AlertIcon size={18} />
+              Name the goal first.
+            </p>
+          )}
         </div>
 
         <div className="field">
           <label htmlFor="g-detail">Detail (optional)</label>
-          <input className="input" id="g-detail" placeholder="10-hour case" value={draft.detail} onChange={(e) => set({ detail: e.target.value })} />
-        </div>
-
-        <div className="field">
-          <span className="fl">Target each day</span>
-          <Stepper
-            value={draft.target}
-            min={1}
-            max={20}
-            unit={draft.target === 1 ? "time" : "times"}
-            label="target"
-            onChange={(target) => set({ target })}
-          />
+          <input className="input" id="g-detail" placeholder="Before 10 AM…" value={draft.detail} onChange={(e) => set({ detail: e.target.value })} />
         </div>
 
         <div className="field">
@@ -148,6 +158,12 @@ function GoalForm({ goalId, initial }: { goalId?: Id<"dailyGoals">; initial: Goa
               );
             })}
           </div>
+          {missing.days && (
+            <p className="err-text" role="alert">
+              <AlertIcon size={18} />
+              Pick at least one day.
+            </p>
+          )}
         </div>
 
         <div className="card">
@@ -173,7 +189,7 @@ function GoalForm({ goalId, initial }: { goalId?: Id<"dailyGoals">; initial: Goa
       </form>
 
       <div className="cta" style={{ paddingBottom: 34 }}>
-        <button type="submit" form="goal-form" className="btn pri full" disabled={!canSave}>
+        <button type="submit" form="goal-form" className="btn pri full" disabled={busy}>
           Save
         </button>
       </div>

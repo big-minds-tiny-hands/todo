@@ -34,7 +34,7 @@ export function TabsFrame({ children }: { children: ReactNode }) {
   const { today } = useToday();
   const all = useQuery(api.tasks.all, { today });
   return (
-    <div className="phone">
+    <div className="phone" id="content" tabIndex={-1}>
       <OfflineBanner />
       {children}
       <TabBar allTasksCount={all ? all.tasks.length : undefined} />
@@ -45,7 +45,7 @@ export function TabsFrame({ children }: { children: ReactNode }) {
 
 export function FullFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="phone">
+    <div className="phone" id="content" tabIndex={-1}>
       <OfflineBanner />
       {children}
       <DevDataDock />

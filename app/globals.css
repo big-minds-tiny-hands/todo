@@ -140,7 +140,7 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 }
 
 @media (pointer: coarse) {
-  input, textarea, select, .bare-input { font-size: 16px; }
+  input, textarea, select { font-size: 16px; }
 }
 
 /* Icons */
@@ -304,12 +304,19 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 .field > label, .field > .fl { font-size: 14px; font-weight: 500; color: var(--tx2); }
 .input { height: 54px; width: 100%; border-radius: 16px; background: var(--s2); border: 1px solid var(--line); color: var(--tx); font-size: 16px; padding: 0 16px; outline: none; }
 .input::placeholder { color: var(--tx3); }
+/* Time field: three shadcn Selects styled as the app's inputs. */
+.time-field { display: flex; align-items: center; gap: 8px; }
+.time-part { height: 54px; min-width: 76px; padding: 0 12px 0 16px; border-radius: 16px; background: var(--s2); border: 1px solid var(--line); color: var(--tx); font-size: 17px; font-variant-numeric: tabular-nums; justify-content: space-between; }
+.time-part:focus-visible { border-color: var(--lime-tx); box-shadow: 0 0 0 3px var(--lime-soft); }
+.time-colon { font-size: 20px; font-weight: 600; color: var(--tx2); }
+.time-menu { background: var(--s1); color: var(--tx); border-radius: 14px; padding: 4px; max-height: min(320px, var(--available-height)); }
+.time-menu [data-slot="select-item"] { font-size: 16px; padding: 10px 32px 10px 12px; border-radius: 10px; font-variant-numeric: tabular-nums; }
+.time-menu [data-slot="select-item"][data-highlighted] { background: var(--s2); }
 .input:focus, .input.focus { border-color: var(--lime-tx); box-shadow: 0 0 0 3px var(--lime-soft); }
 .input.err { border-color: var(--red); }
 .input[disabled] { opacity: 0.55; }
 textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.45; }
 .err-text { font-size: 14px; color: var(--red); display: flex; gap: 8px; align-items: center; margin: 0; }
-.bare-input { flex: 1; background: none; border: 0; outline: none; font-size: 15px; height: 40px; color: var(--tx); }
 
 /* Overlays (fixed in the app; absolute on the canvas) */
 /* Sheets are Base UI drawers: they follow a downward drag and close on distance or a flick. The backdrop fades
@@ -337,7 +344,9 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
 @keyframes fade-in { from { opacity: 0; } }
 
 /* Empty states */
-.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding: 24px 32px; }
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: safe center; text-align: center; gap: 14px; padding: 24px 32px; overflow-y: auto; }
+/* An empty state reads as one centered column at any width: its text and actions never stretch across a desktop layout. */
+.empty > * { max-width: 420px; flex-shrink: 0; }
 .empty-art { width: 96px; height: 96px; border-radius: 32px; background: var(--s1); border: 1px solid var(--line); display: grid; place-items: center; color: var(--lime-tx); margin-bottom: 6px; }
 .empty-art .i { width: 42px; height: 42px; stroke-width: 1.6; }
 
@@ -389,6 +398,39 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
 
 /* Toast copy wraps to two lines rather than cutting off the cheer or a task title. */
 .toast-text { min-width: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; line-height: 1.3; }
+
+/* "N more tasks today": opens in place. The panel grows from 0fr to 1fr, so the height animates without measuring. */
+.more-toggle .t { color: var(--tx2); }
+.more-chevron { color: var(--tx3); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.more-toggle[aria-expanded="true"] .more-chevron { transform: rotate(90deg); }
+.more-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
+.more-panel[data-open] { grid-template-rows: 1fr; }
+.more-panel > div { overflow: hidden; min-height: 0; }
+
+/* Skip link: hidden until a keyboard user tabs to it. */
+.skip-link { position: fixed; left: 12px; top: -64px; z-index: 100; padding: 10px 16px; border-radius: 12px; background: var(--lime); color: var(--lime-ink); font-weight: 600; text-decoration: none; transition: top 0.15s ease-out; }
+.skip-link:focus { top: calc(12px + env(safe-area-inset-top, 0px)); }
+#content:focus { outline: none; }
+
+/* Long lists (hundreds of tasks) skip rendering rows that are off screen. */
+.card > .swipe, .card > .task { content-visibility: auto; contain-intrinsic-size: auto 57px; }
+
+/* Getting started: the steps to a first win. */
+.start-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.start-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 12px; align-items: flex-start; }
+.step-mark { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; border: 1.5px solid var(--s3); color: var(--tx3); }
+.step.now .step-mark { border-color: var(--lime-tx); color: var(--lime-tx); }
+.step.done .step-mark { background: var(--lime); border-color: var(--lime); color: var(--lime-ink); }
+.step-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 3px; }
+.step-title { font-size: 16px; color: var(--tx); }
+.step.done .step-title { color: var(--tx2); }
+.step.later .step-title { color: var(--tx3); }
+.step-detail { font-size: 14px; color: var(--tx2); line-height: 1.4; }
+.hint { margin: 4px 10px 6px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--tx2); }
+.nudge { padding: 0 20px 12px; }
+@media (min-width: 768px) { .nudge { padding: 0 32px 12px; } }
 
 .tile { background: var(--s1); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
 .tile .big { font-family: var(--fd); font-size: 30px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }

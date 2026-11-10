@@ -16,6 +16,7 @@ function leaveAllTasks(store: OptimisticLocalStore, id: Id<"tasks">, onToday: bo
   for (const { args, value } of store.getAllQueries(api.tasks.all)) {
     if (!value || !value.tasks.some((t) => t._id === id)) continue;
     store.setQuery(api.tasks.all, args, {
+      ...value,
       tasks: value.tasks.filter((t) => t._id !== id),
       onTodayCount: value.onTodayCount + (onToday ? 1 : 0),
     });

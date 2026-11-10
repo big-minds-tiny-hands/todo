@@ -69,14 +69,17 @@ export default function SignUpPage() {
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 18 }} aria-busy={busy}>
           <div className="field">
             <label htmlFor="name">Name</label>
-            <input className="input" id="name" autoComplete="name" required disabled={busy} value={name} onChange={(e) => setName(e.target.value)} />
+            <input className="input" id="name" name="name" autoComplete="name" placeholder="Melina Maldonado…" required disabled={busy} value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="field">
             <label htmlFor="email">Email</label>
             <input
               className={`input${error?.field === "email" ? " err" : ""}`}
               id="email"
+              name="email"
               type="email"
+              spellCheck={false}
+              placeholder="you@example.com…"
               autoComplete="email"
               inputMode="email"
               required
@@ -93,6 +96,7 @@ export default function SignUpPage() {
             <input
               className={`input${error?.field === "password" ? " err" : ""}`}
               id="pw"
+              name="new-password"
               type="password"
               autoComplete="new-password"
               minLength={8}
@@ -109,14 +113,8 @@ export default function SignUpPage() {
             {error?.field === "password" && <ErrorText id="pw-err" message={error.message} />}
           </div>
           <button className="btn pri full" type="submit" disabled={busy} style={{ marginTop: 8 }}>
-            {busy ? (
-              <>
-                <SpinnerIcon />
-                Creating account
-              </>
-            ) : (
-              "Create account"
-            )}
+            {busy && <SpinnerIcon />}
+            Create account
           </button>
           {error?.field === "form" && <ErrorText id="form-err" message={error.message} />}
         </form>

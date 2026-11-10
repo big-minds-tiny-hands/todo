@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
         <form onSubmit={send} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div className="field">
             <label htmlFor="email">Email</label>
-            <input className="input" id="email" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input className="input" id="email" name="email" spellCheck={false} placeholder="you@example.com…" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <button className="btn pri full" type="submit" disabled={busy} style={{ marginTop: 8 }}>
             {busy ? <SpinnerIcon /> : null}

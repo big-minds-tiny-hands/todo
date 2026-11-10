@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
 import { AddTaskSheet } from "@/components/add-task-sheet";
 import { Celebration } from "@/components/celebration";
+import { GettingStartedCard, GettingStartedSteps, InstallNudge, OnceHint, type StartStep } from "@/components/onboarding";
 import { LoadingBody } from "@/components/frames";
 import { CheckIcon, ChevronRight, CloseIcon, ListIcon, PlusIcon, RepeatIcon, SunIcon } from "@/components/icons";
 import { SwipeRow } from "@/components/swipe-row";
@@ -13,7 +14,7 @@ import { Avatar, Check, PriorityDot, Ring } from "@/components/ui-todo";
 import { useToday } from "@/hooks/use-today";
 import { lastDays, weekday, weekOf } from "@/lib/day";
 import { usePicks } from "./choose-focus";
-import { AddButton, FocusSection, GoalsSection, NewDayBanner, ScheduleSection, StreakPill, TodayHeader } from "./parts";
+import { AddButton, FocusSection, GoalsSection, MoreToday, NewDayBanner, ScheduleSection, StreakPill, TodayHeader } from "./parts";
 import { TimeCheck, useDismissedSlots } from "./time-check";
 import { useCheck } from "./use-check";
 import { useMoment } from "./use-moment";
@@ -31,13 +32,23 @@ export function TodayScreen() {
   const [planning, setPlanning] = useState(false);
   const [adding, setAdding] = useState<When | null>(null);
   const { dismissed, dismiss } = useDismissedSlots(today);
-  const { moment, after, clear, leaveTo } = useMoment(data, wins, today);
+  const { moment, after, clear } = useMoment(data, wins, today);
   const { check, pending, justChecked } = useCheck(data, today, clear);
 
   const view = deriveView(data, goals, today, planning);
   const streak = wins?.streak ?? 0;
   const avatar = <Avatar name={user?.name} />;
   const add = () => setAdding("today");
+
+  // Getting started runs until the first focus set is finished, which the "First focus set" milestone celebrates.
+  const startStep: StartStep | null =
+    data && wins && wins.firstFocusSetDay === null && !data.settings.gettingStartedHidden ? (!data.hasAnyTask ? 1 : data.focusSet === 0 ? 2 : 3) : null;
+  const firstWinDone = wins?.firstFocusSetDay != null;
+  const installNudge = firstWinDone && (
+    <div className="nudge">
+      <InstallNudge />
+    </div>
+  );
 
   function onCheck(task: Task, done: boolean) {
     after(check(task, done));
@@ -63,7 +74,13 @@ export function TodayScreen() {
             <p className="muted" style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>
               Every task goes in All tasks. Each day, you pick a few to finish first.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", marginTop: 16 }}>
+            <div className="card start-card" style={{ width: "100%", textAlign: "left", marginTop: 8 }}>
+              <p className="small muted" style={{ margin: "0 0 4px" }}>
+                Your first win: 3 steps, about a minute
+              </p>
+              <GettingStartedSteps step={1} focusSize={data?.settings.focusSize ?? 3} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", marginTop: 8 }}>
               <button type="button" className="btn pri full" onClick={() => setAdding("later")}>
                 <PlusIcon style={{ strokeWidth: 2.4 }} />
                 Add your first task
@@ -121,7 +138,15 @@ export function TodayScreen() {
           <TodayHeader today={today} title="Plan today">
             {avatar}
           </TodayHeader>
-          <PlanBody today={today} onToday={[...view.today].sort(byPriority)} />
+          <PlanBody
+            today={today}
+            onToday={[...view.today].sort(byPriority)}
+            start={
+              startStep !== null && (
+                <GettingStartedCard step={startStep} focusSize={view.data.settings.focusSize} onHide={() => void updateSettings({ gettingStartedHidden: true })} />
+              )
+            }
+          />
         </>
       );
       break;
@@ -133,18 +158,19 @@ export function TodayScreen() {
             <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
+          {installNudge}
           <main className="scroll cols" style={{ gridTemplateAreas: "'focus sched' 'focus goals' 'more goals'" }}>
-            <FocusSection focus={view.data.focus} streak={streak} onCheck={onCheck} pending={pending} justChecked={justChecked} />
+            <FocusSection
+              focus={view.data.focus}
+              streak={streak}
+              onCheck={onCheck}
+              pending={pending}
+              justChecked={justChecked}
+              footer={startStep !== null && <OnceHint id="swipe-focus">Tip: swipe a task right to finish it.</OnceHint>}
+            />
             <ScheduleSection schedule={view.data.schedule} minutes={minutes} onCheck={onCheck} />
             <GoalsSection goals={view.goals} today={today} prefs={view.data.settings} />
-            {view.data.rest.length > 0 && (
-              <Link className="card row" href="/focus/choose" style={{ opacity: 0.7, gridArea: "more" }}>
-                <span className="t">
-                  {view.data.rest.length} more {view.data.rest.length === 1 ? "task" : "tasks"} today
-                </span>
-                <ChevronRight style={{ color: "var(--tx3)" }} />
-              </Link>
-            )}
+            <MoreToday tasks={view.data.rest} today={today} onCheck={onCheck} />
           </main>
         </>
       );
@@ -156,6 +182,7 @@ export function TodayScreen() {
             <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
+          {installNudge}
           <NextSetBody data={view.data} open={[...view.open].sort(byPriority)} today={today} />
         </>
       );
@@ -167,6 +194,7 @@ export function TodayScreen() {
             <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
+          {installNudge}
           <DayWonBody
             data={view.data}
             goals={view.goals}
@@ -188,8 +216,7 @@ export function TodayScreen() {
         <Celebration
           moment={moment}
           confetti={data.settings.confetti}
-          onNext={() => leaveTo("/focus/choose")}
-          onWins={() => leaveTo("/wins")}
+          onLeave={clear}
           onClose={clear}
         />
       )}
@@ -199,7 +226,7 @@ export function TodayScreen() {
   );
 }
 
-function PlanBody({ today, onToday }: { today: string; onToday: Task[] }) {
+function PlanBody({ today, onToday, start }: { today: string; onToday: Task[]; start?: ReactNode }) {
   const all = useQuery(api.tasks.all, { today });
   const addToToday = useMutation(api.tasks.addToToday);
   const removeFromToday = useMutation(api.tasks.removeFromToday);
@@ -207,6 +234,7 @@ function PlanBody({ today, onToday }: { today: string; onToday: Task[] }) {
   return (
     <>
       <main className="scroll">
+        {start}
         {onToday.length > 0 && (
           <section>
             <h2 className="label">
