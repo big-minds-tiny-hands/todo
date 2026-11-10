@@ -25,7 +25,6 @@ export const settingsValue = v.object({
   haptics: settingsFields.haptics,
   confetti: settingsFields.confetti,
   newDayBannerSeen: settingsFields.newDayBannerSeen,
-  gettingStartedHidden: settingsFields.gettingStartedHidden,
 });
 
 export const SETTINGS_DEFAULTS = {
@@ -56,7 +55,7 @@ export async function readSettings(ctx: QueryCtx, userId: string) {
     .query("settings")
     .withIndex("by_user", (q) => q.eq("userId", userId))
     .unique();
-  if (!row) return { ...SETTINGS_DEFAULTS, newDayBannerSeen: undefined, gettingStartedHidden: undefined };
+  if (!row) return { ...SETTINGS_DEFAULTS, newDayBannerSeen: undefined };
   return {
     focusSize: row.focusSize,
     dailyTarget: row.dailyTarget,
@@ -64,7 +63,6 @@ export async function readSettings(ctx: QueryCtx, userId: string) {
     haptics: row.haptics,
     confetti: row.confetti,
     newDayBannerSeen: row.newDayBannerSeen,
-    gettingStartedHidden: row.gettingStartedHidden,
   };
 }
 

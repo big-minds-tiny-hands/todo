@@ -64,7 +64,7 @@ function focusMeta(task: Task, { pending, justChecked }: Omit<CheckProps, "onChe
   return null;
 }
 
-export function FocusSection({ focus, streak, footer, ...props }: { focus: Task[]; streak: number; footer?: ReactNode } & CheckProps) {
+export function FocusSection({ focus, streak, ...props }: { focus: Task[]; streak: number } & CheckProps) {
   const done = focus.filter((t) => t.done).length;
   const fresh = props.justChecked !== null && focus.some((t) => t._id === props.justChecked);
   return (
@@ -106,7 +106,6 @@ export function FocusSection({ focus, streak, footer, ...props }: { focus: Task[
           </SwipeRow>
         );
       })}
-      {footer}
     </section>
   );
 }

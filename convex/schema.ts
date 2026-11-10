@@ -51,8 +51,6 @@ export const settingsFields = {
   haptics: v.boolean(),
   confetti: v.boolean(),
   newDayBannerSeen: v.optional(v.string()),
-  /** The user hid the getting-started steps on Today. */
-  gettingStartedHidden: v.optional(v.boolean()),
 };
 
 export default defineSchema({

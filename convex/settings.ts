@@ -16,7 +16,6 @@ export const update = mutation({
     haptics: v.optional(v.boolean()),
     confetti: v.optional(v.boolean()),
     newDayBannerSeen: v.optional(v.string()),
-    gettingStartedHidden: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, patch) => {

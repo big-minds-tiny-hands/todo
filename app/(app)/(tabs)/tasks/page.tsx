@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { AddTaskSheet } from "@/components/add-task-sheet";
 import { ChevronRight, ListIcon, PlusIcon, SunIcon, TrashIcon } from "@/components/icons";
-import { OnceHint } from "@/components/onboarding";
 import { RecentlyDeleted } from "@/components/tasks/recently-deleted";
 import { SwipeRow } from "@/components/swipe-row";
 import { DaySheet } from "@/components/tasks/day-sheet";
@@ -128,8 +127,6 @@ export default function AllTasksPage() {
             Add a task
           </span>
         </button>
-
-        <OnceHint id="swipe-tasks">Tip: swipe a task right to put it on Today, or left to delete it.</OnceHint>
 
         <Link className="card row" href="/">
           <SunIcon style={{ color: "var(--lime-tx)" }} />
