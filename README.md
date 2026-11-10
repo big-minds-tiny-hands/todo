@@ -14,12 +14,12 @@ Bun, Next.js 16 (App Router), Convex, Better Auth (`@convex-dev/better-auth`), s
 
 ## Run
 
-The code lives on the dev box at `~/Projects/todo`. The lane port is 3012, which forwards to the Mac.
+The code lives on the dev box at `~/Projects/todo`. The lane port is 3001, which forwards to the Mac.
 
 ```bash
 bun install
 bunx convex dev        # syncs functions to the bmth/todo dev deployment
-bun run dev -- -p 3012
+bun run dev -- -p 3001
 ```
 
 Convex dev dashboard: https://dashboard.convex.dev/t/bmth/todo/artful-mastiff-968

@@ -12,11 +12,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ### Issue tracker
 
-Issues live in Linear (ENG team, Todo project) and sync to GitHub issues in `big-minds-tiny-hands/tiny-solution`. Use `~/bin/linear`. See `docs/agents/issue-tracker.md`.
+Issues live in Linear (OPS team, Todo project). They do not sync to GitHub. Use `~/bin/linear`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-The five default labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), in Linear's Execution Readiness group. See `docs/agents/triage-labels.md`.
+OPS has no Execution Readiness labels yet, so the five triage roles map to issue states. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
