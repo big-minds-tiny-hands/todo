@@ -143,8 +143,7 @@ export function TodayScreen() {
     case "focus":
       body = (
         <>
-          <TodayHeader today={today}>
-            <Ring done={view.data.doneToday.length} target={view.data.settings.dailyTarget} href="/wins" />
+          <TodayHeader today={today} progress={<Ring done={view.data.doneToday.length} target={view.data.settings.dailyTarget} href="/wins" />}>
             <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
@@ -169,7 +168,7 @@ export function TodayScreen() {
     case "nextSet":
       body = (
         <>
-          <TodayHeader today={today}>
+          <TodayHeader today={today} progress={<Ring done={view.data.doneToday.length} target={view.data.settings.dailyTarget} href="/wins" />}>
             <AddButton onClick={add} />
             {avatar}
           </TodayHeader>

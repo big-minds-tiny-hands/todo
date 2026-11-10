@@ -12,12 +12,14 @@ import { clockLabel, longDate } from "@/lib/day";
 import { reward, showToast, type RewardPrefs } from "@/lib/reward";
 import { checklistLabel, clockOf, isNow, pickMeta, slotMeta, type GoalRow, type Task } from "./view";
 
-export function TodayHeader({ today, title = "Today", children }: { today: string; title?: string; children: ReactNode }) {
+/** `progress` sits under the title, where it has room for its words on a phone. */
+export function TodayHeader({ today, title = "Today", progress, children }: { today: string; title?: string; progress?: ReactNode; children: ReactNode }) {
   return (
     <header className="head">
       <div>
         <p className="eyebrow">{longDate(today)}</p>
         <h1 className="h1">{title}</h1>
+        {progress}
       </div>
       <div className="head-actions">{children}</div>
     </header>

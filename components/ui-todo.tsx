@@ -44,7 +44,6 @@ export function Check({
   );
 }
 
-/** Daily ring: done today against the daily target. */
 /** Counts the ring's gains while it stays on screen, so each one can play once. The first render plays nothing. */
 function useRingGains(done: number, target: number) {
   const [seen, setSeen] = useState(done);
@@ -58,37 +57,37 @@ function useRingGains(done: number, target: number) {
   return { plus, ping };
 }
 
+/** Daily progress: a small ring and "1 of 3 done", done today against the daily target. */
 export function Ring({ done, target, href }: { done: number; target: number; href?: string }) {
   const circumference = 113;
   const offset = circumference * (1 - Math.min(1, target ? done / target : 0));
   const { plus, ping } = useRingGains(done, target);
+  const className = `progress${done >= target ? " full" : ""}`;
   const content = (
     <>
-      {ping > 0 && <span key={`ping-${ping}`} className="ping" aria-hidden="true" />}
-      {plus > 0 && (
-        <span key={`plus-${plus}`} className="plus1" aria-hidden="true">
-          +1
-        </span>
-      )}
-      <svg viewBox="0 0 44 44" aria-hidden="true">
-        <circle className="track" cx="22" cy="22" r="18" />
-        <circle className="val" cx="22" cy="22" r="18" style={{ strokeDasharray: circumference, strokeDashoffset: offset }} />
-      </svg>
-      <b>
-        {done}/{target}
-      </b>
+      <span className="ring" aria-hidden="true">
+        {ping > 0 && <span key={`ping-${ping}`} className="ping" />}
+        {plus > 0 && (
+          <span key={`plus-${plus}`} className="plus1">
+            +1
+          </span>
+        )}
+        <svg viewBox="0 0 44 44">
+          <circle className="track" cx="22" cy="22" r="18" />
+          <circle className="val" cx="22" cy="22" r="18" style={{ strokeDasharray: circumference, strokeDashoffset: offset }} />
+        </svg>
+      </span>
+      <span className="num">
+        {done} of {target} done
+      </span>
     </>
   );
-  const label = `${done} of ${target} done today`;
-  const className = `ring${done >= target ? " full" : ""}`;
   return href ? (
-    <Link className={className} href={href} aria-label={`${label}. See your wins`}>
+    <Link className={className} href={href} aria-label={`${done} of ${target} done today. See your wins`}>
       {content}
     </Link>
   ) : (
-    <span className={className} aria-label={label}>
-      {content}
-    </span>
+    <span className={className}>{content}</span>
   );
 }
 
