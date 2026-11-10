@@ -1,4 +1,4 @@
-# Todo
+# Tiny ToDo
 
 A personal planner for one person's workday. Its purpose is to help a user pick what matters most each day and feel that the day was won.
 
@@ -17,6 +17,10 @@ _Avoid_: Later, pool, backlog, inbox, list, someday
 **Priority**:
 The rank of a task in All tasks: High, Normal or Low.
 _Avoid_: Importance, urgency, flag
+
+**Completed**:
+The tasks the user has finished, newest first, grouped by the day they were done. Unchecking one reopens it.
+_Avoid_: Done list, archive, history, logbook
 
 **Checklist**:
 An ordered list of steps inside one task.
@@ -51,7 +55,7 @@ _Avoid_: Due time, deadline, appointment, timer
 ### Planning ahead
 
 **Planned day**:
-A future date placed on a task. On that date the task shows in Today.
+A future date placed on a task. Until then the task shows under Planned in All tasks, not with the tasks to pick from. On that date it shows in Today. If the date passes, the task returns quietly to All tasks.
 _Avoid_: Due date, scheduled date, start date
 
 **Calendar**:

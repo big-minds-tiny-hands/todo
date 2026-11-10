@@ -8,13 +8,13 @@ web
 
 ## Users
 
-Todo is a product for anyone who has more to do than one day holds and wants to finish what matters instead of managing a list.
+Tiny ToDo is a product for anyone who has more to do than one day holds and wants to finish what matters instead of managing a list.
 
 Its first real user runs operations at Big Minds Tiny Hands. She works mostly from her phone between calls, tours and staffing work, and on a computer at her desk. Her day mixes tasks, meetings at set times, and things to do every day, such as staffing a case or getting two tours. Her needs set the bar until other users are confirmed.
 
 ## Product Purpose
 
-Todo helps a person pick what matters today, finish it, and feel that the day was won. Success is a user who comes back each day because finishing feels good and the list never punishes her for yesterday.
+Tiny ToDo helps a person pick what matters today, finish it, and feel that the day was won. Success is a user who comes back each day because finishing feels good and the list never punishes her for yesterday.
 
 ## Positioning
 
@@ -27,14 +27,16 @@ Todo helps a person pick what matters today, finish it, and feel that the day wa
 
 - Phone first, installed as a PWA, with full layouts for iPad and desktop.
 - Used in short bursts during a working day: open, check something off, plan the next set, close.
-- Time slots are start times, not deadlines. After a slot starts, Todo asks whether it happened.
+- Time slots are start times, not deadlines. After a slot ends, Tiny ToDo asks whether it happened, unless the task was picked for Today after that.
 - Daily goals are single checks that come back each day on chosen weekdays, separate from tasks. They carry no counts: "Get 2 tours" is the goal's name.
 - Checks save while offline and sync on reconnect.
 
 ## Capabilities and Constraints
 
 - Shipped: All tasks with priorities, Today, focus sets, focus mode, time slots and meetings with a "Did you do this?" check, a calendar of planned days, checklists and notes in a task, daily goals, Wins with streaks and milestones, light and dark themes, sounds, haptics and confetti that each switch off, email and password sign-in, password reset, and Google and Microsoft sign-in once their credentials are set.
-- Terminology lives in `GLOSSARY.md`: Task, All tasks, Today, Focus set, Back to All tasks, Win, Daily goal, Time slot, Planned day, Calendar.
+- Shipped: Completed, a page of finished tasks grouped by day, where unchecking a task reopens it.
+- Shipped: a Planned section in All tasks that holds tasks put on a later day, grouped by day with their times.
+- Terminology lives in `GLOSSARY.md`: Task, All tasks, Completed, Today, Focus set, Back to All tasks, Win, Daily goal, Time slot, Planned day, Calendar.
 - Stack: Next.js with Bun, Convex, Better Auth, shadcn/ui on Base UI, Vercel.
 - Tasks are private to their owner. There is no sharing between users.
 - Sign-up is open to anyone with an email, Google or Microsoft account.
@@ -42,7 +44,7 @@ Todo helps a person pick what matters today, finish it, and feel that the day wa
 
 ## Brand Commitments
 
-- The name is Todo.
+- The name is Tiny ToDo. Write it with a capital T and D, as two words.
 - The finished experience must feel rewarding enough to come back to every day (the brief's words: "dopaminergic", "she should become addicted"), without nagging or guilt.
 - Copy is plain and short, in the product's own terms from `GLOSSARY.md`.
 - The design canvas made for this project is the visual reference the build matches, in both light and dark.

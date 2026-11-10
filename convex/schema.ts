@@ -20,6 +20,8 @@ export const taskFields = {
   todayDay: v.optional(v.string()),
   /** Put on this day from the calendar or the day picker. */
   plannedDay: v.optional(v.string()),
+  /** When the task last landed on Today, so a time slot that ended before then is never asked about. */
+  pickedAt: v.optional(v.number()),
   /** In focus set number `focusSet` on `focusDay`, at position `focusSlot`. */
   focusDay: v.optional(v.string()),
   focusSet: v.optional(v.number()),

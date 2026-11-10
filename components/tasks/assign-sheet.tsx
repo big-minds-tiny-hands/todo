@@ -26,7 +26,7 @@ function AssignForm({ day, today, onDone }: AssignProps & { onDone: () => void }
   const update = useMutation(api.tasks.update);
   const [picked, setPicked] = useState<ReadonlySet<Id<"tasks">>>(new Set());
   const [busy, setBusy] = useState(false);
-  const tasks = all?.tasks.filter((t) => t.plannedDay !== day);
+  const tasks = all && [...all.pool, ...all.planned].filter((t) => t.plannedDay !== day);
 
   function toggle(id: Id<"tasks">) {
     setPicked((prev) => {

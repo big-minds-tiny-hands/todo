@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TITLES: [RegExp, string][] = [
   [/^\/$/, "Today"],
   [/^\/tasks$/, "All tasks"],
+  [/^\/tasks\/completed$/, "Completed"],
   [/^\/calendar$/, "Calendar"],
   [/^\/wins$/, "Your wins"],
   [/^\/settings$/, "Settings"],
@@ -15,7 +16,7 @@ const TITLES: [RegExp, string][] = [
   [/^\/task\/[^/]+$/, "Task"],
   [/^\/focus$/, "Focus"],
   [/^\/focus\/choose$/, "Choose a focus set"],
-  [/^\/install$/, "Install Todo"],
+  [/^\/install$/, "Install Tiny ToDo"],
   [/^\/sign-in$/, "Sign in"],
   [/^\/sign-up$/, "Create an account"],
   [/^\/forgot-password$/, "Reset your password"],
@@ -26,5 +27,5 @@ const TITLES: [RegExp, string][] = [
 export function RouteTitle() {
   const pathname = usePathname();
   const name = TITLES.find(([pattern]) => pattern.test(pathname))?.[1];
-  return <title>{name ? `${name} · Todo` : "Todo"}</title>;
+  return <title>{name ? `${name} · Tiny ToDo` : "Tiny ToDo"}</title>;
 }

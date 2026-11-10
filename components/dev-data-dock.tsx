@@ -38,9 +38,9 @@ export function DevDataDock() {
   }
 
   return (
-    <div style={{ position: "fixed", right: 12, bottom: "calc(96px + env(safe-area-inset-bottom))", zIndex: 70, fontFamily: "var(--ff)", maxWidth: "calc(100vw - 24px)" }}>
+    <div style={{ position: "fixed", right: 12, bottom: "calc(96px + env(safe-area-inset-bottom))", zIndex: 70, fontFamily: "var(--ff)", width: "max-content", maxWidth: "calc(100vw - 24px)", pointerEvents: "none" }}>
       {open ? (
-        <div className="card" style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8, boxShadow: "var(--shadow)", width: 340, maxWidth: "100%" }}>
+        <div className="card" style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8, boxShadow: "var(--shadow)", width: 340, maxWidth: "100%", pointerEvents: "auto" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span className="small" style={{ fontWeight: 600 }}>Dev data</span>
             <button type="button" className="link" style={{ minHeight: 32, fontSize: 13 }} onClick={() => setOpen(false)}>
@@ -57,7 +57,7 @@ export function DevDataDock() {
           {error && <p className="err-text" style={{ fontSize: 12 }}>{error}</p>}
         </div>
       ) : (
-        <button type="button" className="pill" onClick={() => setOpen(true)} style={{ border: "1px solid var(--line)", cursor: "pointer", height: 32 }}>
+        <button type="button" className="pill" onClick={() => setOpen(true)} style={{ border: "1px solid var(--line)", cursor: "pointer", height: 32, pointerEvents: "auto" }}>
           Dev data
         </button>
       )}

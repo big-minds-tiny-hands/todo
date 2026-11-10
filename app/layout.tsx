@@ -14,8 +14,8 @@ const grotesk = Space_Grotesk({ variable: "--font-grotesk", subsets: ["latin"], 
 // No `title` here: RouteTitle owns <title> for every route, and a second metadata title would win after navigation.
 export const metadata: Metadata = {
   description: "Pick what matters today, then win the day.",
-  applicationName: "Todo",
-  appleWebApp: { capable: true, title: "Todo", statusBarStyle: "black-translucent" },
+  applicationName: "Tiny ToDo",
+  appleWebApp: { capable: true, title: "Tiny ToDo", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

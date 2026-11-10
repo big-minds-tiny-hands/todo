@@ -7,17 +7,33 @@ import { api } from "@/convex/_generated/api";
 import { AddTaskSheet } from "@/components/add-task-sheet";
 import { Celebration } from "@/components/celebration";
 import { LoadingBody } from "@/components/frames";
-import { CheckIcon, CloseIcon, ListIcon, PlusIcon, RepeatIcon, SunIcon } from "@/components/icons";
+import { CheckIcon, ListIcon, PlusIcon, RepeatIcon, SunIcon } from "@/components/icons";
+import { PriorityGroups } from "@/components/tasks/priority-groups";
 import { SwipeRow } from "@/components/swipe-row";
-import { Avatar, Check, PriorityDot, Ring } from "@/components/ui-todo";
+import { Avatar, Ring, RowAction, SendToToday } from "@/components/ui-todo";
+import { useAddToToday } from "@/components/tasks/task-actions-menu";
+import { useLinger } from "@/components/tasks/use-linger";
 import { useToday } from "@/hooks/use-today";
 import { lastDays, weekday, weekOf } from "@/lib/day";
 import { usePicks } from "./choose-focus";
-import { AddButton, DoneToday, FocusSection, GoalsSection, MoreToday, NewDayBanner, ScheduleSection, StreakPill, TodayHeader } from "./parts";
+import {
+  AddButton,
+  completeAction,
+  DoneToday,
+  FocusSection,
+  GoalsSection,
+  MoreToday,
+  NewDayBanner,
+  OpenTaskRow,
+  ScheduleSection,
+  StreakPill,
+  TodayHeader,
+} from "./parts";
 import { TimeCheck, useDismissedSlots } from "./time-check";
 import { useCheck } from "./use-check";
 import { useMoment } from "./use-moment";
-import { byPriority, deriveView, pickMeta, slotToCheck, type GoalRow, type Task, type TodayData } from "./view";
+import { byPriority } from "@/lib/placement";
+import { deriveView, pickMeta, slotToCheck, type GoalRow, type Task, type TodayData } from "./view";
 
 type When = "today" | "later";
 
@@ -82,6 +98,7 @@ export function TodayScreen() {
         <>
           <TodayHeader today={today}>
             <StreakPill streak={streak} short />
+            <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
           <main className="scroll cols" style={{ gridTemplateAreas: "'banner goals' 'plan goals'" }}>
@@ -95,13 +112,7 @@ export function TodayScreen() {
                   </h2>
                   <div className="card">
                     {view.planned.map((task) => (
-                      <div key={task._id} className="task">
-                        <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`Complete ${task.title}`} />
-                        <div className="t">
-                          <div className="tt">{task.title}</div>
-                          <div className="m">{pickMeta(task, today)}</div>
-                        </div>
-                      </div>
+                      <OpenTaskRow key={task._id} task={task} meta={pickMeta(task, today)} onCheck={onCheck} />
                     ))}
                   </div>
                 </>
@@ -118,18 +129,24 @@ export function TodayScreen() {
     case "plan":
       body = (
         <>
-          <TodayHeader today={today} title="Plan today">
+          <TodayHeader today={today} title="Plan today" progress={<Ring done={view.data.doneToday.length} target={view.data.settings.dailyTarget} href="/wins" />}>
+            <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
-          <PlanBody today={today} onToday={[...view.today].sort(byPriority)} />
+          <PlanBody
+            today={today}
+            onToday={[...view.today].sort(byPriority)}
+            done={view.data.doneToday}
+            onCheck={onCheck}
+            goals={<GoalsSection goals={view.goals} today={today} prefs={view.data.settings} invite />}
+          />
         </>
       );
       break;
     case "focus":
       body = (
         <>
-          <TodayHeader today={today}>
-            <Ring done={view.data.doneToday.length} target={view.data.settings.dailyTarget} href="/wins" />
+          <TodayHeader today={today} progress={<Ring done={view.data.doneToday.length} target={view.data.settings.dailyTarget} href="/wins" />}>
             <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
@@ -154,7 +171,7 @@ export function TodayScreen() {
     case "nextSet":
       body = (
         <>
-          <TodayHeader today={today}>
+          <TodayHeader today={today} progress={<Ring done={view.data.doneToday.length} target={view.data.settings.dailyTarget} href="/wins" />}>
             <AddButton onClick={add} />
             {avatar}
           </TodayHeader>
@@ -183,7 +200,7 @@ export function TodayScreen() {
       break;
   }
 
-  const slot = data && moment === null ? slotToCheck(data, minutes, dismissed) : undefined;
+  const slot = data && moment === null ? slotToCheck(data, today, minutes, dismissed) : undefined;
   return (
     <>
       {body}
@@ -201,76 +218,86 @@ export function TodayScreen() {
   );
 }
 
-function PlanBody({ today, onToday }: { today: string; onToday: Task[] }) {
+function PlanBody({
+  today,
+  onToday,
+  done,
+  onCheck,
+  goals,
+}: {
+  today: string;
+  onToday: Task[];
+  done: Task[];
+  onCheck: (task: Task, done: boolean) => void;
+  goals: ReactNode;
+}) {
   const all = useQuery(api.tasks.all, { today });
-  const addToToday = useMutation(api.tasks.addToToday);
+  const addToToday = useAddToToday();
   const removeFromToday = useMutation(api.tasks.removeFromToday);
-  const pool = all?.tasks ?? [];
+  const { hold, withHeld } = useLinger<Task>();
+  const { rows: pool, isHeld } = withHeld(all?.pool ?? [], "pool", byPriority);
   return (
     <>
       <main className="scroll">
         {onToday.length > 0 && (
-          <section>
-            <h2 className="label">
+          <section className="stack">
+            <h2 className="stitle">
               <span>Today</span>
-              <b className="num">{onToday.length}</b>
+              <span className="num">{onToday.length}</span>
             </h2>
-            <div className="card">
-              {onToday.map((task) => (
+            <PriorityGroups tasks={onToday} heading="h3">
+              {(task) => (
                 <SwipeRow
-                  key={task._id}
+                  right={completeAction(task, onCheck)}
                   left={{ label: "All tasks", icon: <ListIcon />, tone: "neutral", leaves: true, run: () => void removeFromToday({ id: task._id, today }) }}
                 >
-                  <div className="task">
-                    <PriorityDot priority={task.priority} />
-                    <div className="t">
-                      <div className="tt">{task.title}</div>
-                      <div className="m">{pickMeta(task, today)}</div>
-                    </div>
-                    <button
-                      type="button"
-                      className="iconbtn ghost"
-                      aria-label={`Send ${task.title} back to All tasks`}
-                      onClick={() => void removeFromToday({ id: task._id, today })}
-                    >
-                      <CloseIcon />
-                    </button>
-                  </div>
+                  <OpenTaskRow task={task} meta={pickMeta(task, today, { priority: false })} onCheck={onCheck}>
+                    <RowAction name={`Not today: ${task.title}`} onClick={() => void removeFromToday({ id: task._id, today })}>
+                      Not today
+                    </RowAction>
+                  </OpenTaskRow>
                 </SwipeRow>
-              ))}
-            </div>
+              )}
+            </PriorityGroups>
           </section>
         )}
         {pool.length > 0 && (
-          <section>
-            <h2 className="label">
+          <section className="stack">
+            <h2 className="stitle">
               <span>From All tasks</span>
-              <span>By priority</span>
+              <span className="num">{all?.pool.length}</span>
             </h2>
-            <div className="card">
-              {pool.map((task) => (
-                <SwipeRow
-                  key={task._id}
-                  right={{ label: "Today", icon: <SunIcon />, tone: "lime", leaves: true, run: () => void addToToday({ id: task._id, today }) }}
-                >
-                  <div className="task">
-                    <PriorityDot priority={task.priority} />
-                    <div className="t">
-                      <div className="tt">{task.title}</div>
-                      <div className="m">{pickMeta(task, today)}</div>
+            <PriorityGroups tasks={pool} heading="h3">
+              {(task) => {
+                const meta = pickMeta(task, today, { priority: false });
+                const sent = isHeld(task._id);
+                return (
+                  <SwipeRow right={sent ? undefined : { label: "Today", icon: <SunIcon />, tone: "lime", leaves: true, run: () => void addToToday(task, today) }}>
+                    <div className="task">
+                      <Link className="t" href={`/task/${task._id}`} style={{ textDecoration: "none" }}>
+                        <div className="tt">{task.title}</div>
+                        {meta && <div className="m">{meta}</div>}
+                      </Link>
+                      <SendToToday
+                        title={task.title}
+                        sent={sent}
+                        onSend={() => {
+                          hold(task, "pool");
+                          void addToToday(task, today);
+                        }}
+                      />
                     </div>
-                    <button type="button" className="iconbtn" aria-label={`Add ${task.title} to Today`} onClick={() => void addToToday({ id: task._id, today })}>
-                      <PlusIcon />
-                    </button>
-                  </div>
-                </SwipeRow>
-              ))}
-            </div>
+                  </SwipeRow>
+                );
+              }}
+            </PriorityGroups>
           </section>
         )}
+        <DoneToday tasks={done} onCheck={onCheck} />
+        {goals}
       </main>
       <div className="cta">
-        {onToday.length > 0 ? (
+        {onToday.length > 0 || pool.length > 0 ? (
           <Link className="btn pri full" href="/focus/choose">
             Choose a focus set
           </Link>
@@ -324,34 +351,21 @@ function NextSetBody({ data, open, today, onCheck }: { data: TodayData; open: Ta
           ))}
         </section>
 
-        <section style={{ gridArea: "today" }}>
-          <h2 className="label">
+        <section className="stack" style={{ gridArea: "today" }}>
+          <h2 className="stitle">
             <span>Today</span>
             <span className="num">{left.length} left</span>
           </h2>
-          {left.length > 0 && (
-            <div className="card">
-              {left.map((task) => (
-                <div key={task._id} className="task">
-                  <PriorityDot priority={task.priority} />
-                  <div className="t">
-                    <div className="tt">{task.title}</div>
-                    <div className="m">{pickMeta(task, today)}</div>
-                  </div>
-                  <button
-                    type="button"
-                    className="mark"
-                    aria-label={`Add ${task.title} to the next focus set`}
-                    disabled={picks.length >= limit}
-                    onClick={() => toggle(task._id)}
-                  >
-                    <span />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <Link className="link" href="/tasks" style={{ margin: "8px 4px 0" }}>
+          <PriorityGroups tasks={left} heading="h3">
+            {(task) => (
+              <OpenTaskRow task={task} meta={pickMeta(task, today, { priority: false })} onCheck={onCheck}>
+                <RowAction name={`Pick ${task.title}`} disabled={picks.length >= limit} onClick={() => toggle(task._id)}>
+                  Pick
+                </RowAction>
+              </OpenTaskRow>
+            )}
+          </PriorityGroups>
+          <Link className="link" href="/tasks" style={{ margin: "-8px 4px 0" }}>
             <PlusIcon size={18} />
             Pick from All tasks
           </Link>

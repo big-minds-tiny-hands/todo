@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { byPriority, day, isOnDay, ownTask, readSettings, requireUserId, settingsValue, taskDoc, type Task } from "./lib";
+import { byPlannedDay, byPriority, placeOf } from "../lib/placement";
+import { day, ownTask, readSettings, requireUserId, settingsValue, taskDoc, type Task } from "./lib";
 import { priority, taskKind } from "./schema";
 
 async function openTasks(ctx: Parameters<typeof requireUserId>[0], userId: string) {
@@ -21,6 +22,11 @@ async function doneOn(ctx: Parameters<typeof requireUserId>[0], userId: string, 
 
 function currentFocusSet(tasks: Task[], today: string) {
   return tasks.reduce((max, t) => (t.focusDay === today && t.focusSet ? Math.max(max, t.focusSet) : max), 0);
+}
+
+/** A task already on Today keeps the moment it arrived. */
+function pickedAt(task: Task, today: string) {
+  return placeOf(task, today).kind === "today" ? task.pickedAt : Date.now();
 }
 
 function byTime(a: Task, b: Task) {
@@ -45,7 +51,7 @@ export const today = query({
     const userId = await requireUserId(ctx);
     const open = await openTasks(ctx, userId);
     const doneToday = (await doneOn(ctx, userId, today)).sort((a, b) => (a.doneAt ?? 0) - (b.doneAt ?? 0));
-    const onToday = open.filter((t) => isOnDay(t, today));
+    const onToday = open.filter((t) => placeOf(t, today).kind === "today");
     const everything = [...onToday, ...doneToday];
     const focusSet = currentFocusSet(everything, today);
     const focus = everything
@@ -54,7 +60,7 @@ export const today = query({
     const focusIds = new Set(focus.map((t) => t._id));
     const schedule = everything.filter((t) => t.startTime && !focusIds.has(t._id)).sort(byTime);
     const rest = onToday.filter((t) => !t.startTime && !focusIds.has(t._id)).sort(byPriority);
-    const returnedCount = open.filter((t) => t.todayDay === yesterday && !isOnDay(t, today)).length;
+    const returnedCount = open.filter((t) => t.todayDay === yesterday && placeOf(t, today).kind !== "today").length;
     return {
       focus,
       focusSet,
@@ -62,24 +68,55 @@ export const today = query({
       rest,
       doneToday,
       returnedCount,
-      allTasksCount: open.length,
+      allTasksCount: open.filter((t) => placeOf(t, today).kind === "pool").length,
       hasAnyTask: open.length + doneToday.length > 0,
       settings: await readSettings(ctx, userId),
     };
   },
 });
 
-/** All open tasks by priority, plus how many of them are on Today. */
+/** Open tasks off Today: the pool by priority, and tasks planned for a later day. */
 export const all = query({
   args: { today: day },
-  returns: v.object({ tasks: v.array(taskDoc), onTodayCount: v.number(), hasAnyTask: v.boolean() }),
+  returns: v.object({
+    pool: v.array(taskDoc),
+    planned: v.array(taskDoc),
+    // Old installed clients read `tasks` until they reload onto this release. Remove after it has been live a day.
+    tasks: v.array(taskDoc),
+    onTodayCount: v.number(),
+    hasAnyTask: v.boolean(),
+  }),
   handler: async (ctx, { today }) => {
     const userId = await requireUserId(ctx);
     const open = await openTasks(ctx, userId);
-    const onTodayCount = open.filter((t) => isOnDay(t, today)).length;
+    const at = (kind: "today" | "planned" | "pool") => open.filter((t) => placeOf(t, today).kind === kind);
     // Tells a first visit (nothing ever added) from a cleared list, so each gets its own empty state.
     const anyTask = open.length > 0 || (await ctx.db.query("tasks").withIndex("by_user_done", (q) => q.eq("userId", userId)).first()) !== null;
-    return { tasks: open.filter((t) => !isOnDay(t, today)).sort(byPriority), onTodayCount, hasAnyTask: anyTask };
+    const pool = at("pool").sort(byPriority);
+    const planned = at("planned").sort(byPlannedDay);
+    return {
+      pool,
+      planned,
+      tasks: [...pool, ...planned],
+      onTodayCount: at("today").length,
+      hasAnyTask: anyTask,
+    };
+  },
+});
+
+/** Finished tasks, newest first. */
+export const completed = query({
+  args: {},
+  returns: v.array(taskDoc),
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const rows = await ctx.db
+      .query("tasks")
+      .withIndex("by_user_doneDay", (q) => q.eq("userId", userId).gte("doneDay", ""))
+      .order("desc")
+      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .take(100);
+    return rows.sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0));
   },
 });
 
@@ -149,6 +186,7 @@ export const create = mutation({
       done: false,
       todayDay: args.todayDay,
       plannedDay: args.plannedDay,
+      pickedAt: args.todayDay || args.plannedDay ? Date.now() : undefined,
       startTime: args.startTime,
       lengthMin: args.lengthMin,
       checklist: [],
@@ -180,7 +218,10 @@ export const update = mutation({
     if (fields.notes !== undefined) patch.notes = fields.notes;
     if (fields.priority !== undefined) patch.priority = fields.priority;
     if (fields.kind !== undefined) patch.kind = fields.kind;
-    if (fields.plannedDay !== undefined) patch.plannedDay = fields.plannedDay ?? undefined;
+    if (fields.plannedDay !== undefined) {
+      patch.plannedDay = fields.plannedDay ?? undefined;
+      if (fields.plannedDay) patch.pickedAt = Date.now();
+    }
     if (fields.startTime !== undefined) patch.startTime = fields.startTime ?? undefined;
     if (fields.lengthMin !== undefined) patch.lengthMin = fields.lengthMin ?? undefined;
     await ctx.db.patch(id, patch);
@@ -204,8 +245,8 @@ export const addToToday = mutation({
   returns: v.null(),
   handler: async (ctx, { id, today }) => {
     const userId = await requireUserId(ctx);
-    await ownTask(ctx, userId, id);
-    await ctx.db.patch(id, { todayDay: today });
+    const task = await ownTask(ctx, userId, id);
+    await ctx.db.patch(id, { todayDay: today, pickedAt: pickedAt(task, today) });
     return null;
   },
 });
@@ -244,8 +285,8 @@ export const startFocus = mutation({
     for (const t of currentOpen) await ctx.db.patch(t._id, { focusDay: undefined, focusSet: undefined, focusSlot: undefined });
     const setNumber = currentOpen.length > 0 ? Math.max(current, 1) : current + 1;
     for (const [slot, id] of ids.entries()) {
-      await ownTask(ctx, userId, id);
-      await ctx.db.patch(id, { focusDay: today, focusSet: setNumber, focusSlot: slot, todayDay: today });
+      const task = await ownTask(ctx, userId, id);
+      await ctx.db.patch(id, { focusDay: today, focusSet: setNumber, focusSlot: slot, todayDay: today, pickedAt: pickedAt(task, today) });
     }
     return null;
   },
@@ -257,7 +298,7 @@ export const addToFocus = mutation({
   returns: v.null(),
   handler: async (ctx, { id, today }) => {
     const userId = await requireUserId(ctx);
-    await ownTask(ctx, userId, id);
+    const task = await ownTask(ctx, userId, id);
     const settings = await readSettings(ctx, userId);
     const everything = [...(await openTasks(ctx, userId)), ...(await doneOn(ctx, userId, today))];
     let set = currentFocusSet(everything, today);
@@ -267,7 +308,7 @@ export const addToFocus = mutation({
       members = [];
     }
     if (members.length >= settings.focusSize) throw new ConvexError(`Your focus set already has ${settings.focusSize}`);
-    await ctx.db.patch(id, { focusDay: today, focusSet: set, focusSlot: members.length, todayDay: today });
+    await ctx.db.patch(id, { focusDay: today, focusSet: set, focusSlot: members.length, todayDay: today, pickedAt: pickedAt(task, today) });
     return null;
   },
 });
