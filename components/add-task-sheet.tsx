@@ -145,10 +145,12 @@ function AddTaskForm({ today, defaultWhen = "later", defaultDay }: AddTaskProps)
           </button>
         )}
       </div>
-      <button className="btn pri full" type="submit" style={{ marginTop: 4 }}>
-        {saving > 0 && <SpinnerIcon />}
-        Add task
-      </button>
+      <div className="sheet-foot">
+        <button className="btn pri full" type="submit">
+          {saving > 0 && <SpinnerIcon />}
+          Add task
+        </button>
+      </div>
     </form>
   );
 }
