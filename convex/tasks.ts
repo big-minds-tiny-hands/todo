@@ -86,19 +86,32 @@ export const inRange = query({
   returns: v.array(taskDoc),
   handler: async (ctx, { from, to }) => {
     const userId = await requireUserId(ctx);
-    const rows = await ctx.db
+    const planned = await ctx.db
       .query("tasks")
       .withIndex("by_user_plannedDay", (q) => q.eq("userId", userId).gte("plannedDay", from).lte("plannedDay", to))
       .collect();
-    return rows.filter((t) => !t.deletedAt).sort(byTime);
+    // Tasks picked for Today carry todayDay, not plannedDay, but still belong on that day's calendar cell.
+    const inWindow = (d?: string) => d !== undefined && d >= from && d <= to;
+    const picked = (await openTasks(ctx, userId)).filter((t) => inWindow(t.todayDay));
+    const doneOnDays = (
+      await ctx.db
+        .query("tasks")
+        .withIndex("by_user_doneDay", (q) => q.eq("userId", userId).gte("doneDay", from).lte("doneDay", to))
+        .collect()
+    ).filter((t) => inWindow(t.todayDay));
+    const byId = new Map([...planned, ...picked, ...doneOnDays].filter((t) => !t.deletedAt).map((t) => [t._id, t]));
+    return [...byId.values()].sort(byTime);
   },
 });
 
 export const get = query({
-  args: { id: v.id("tasks") },
+  // A string, not v.id, so a malformed id from the URL reads as "not found" instead of throwing.
+  args: { id: v.string() },
   returns: v.union(v.null(), taskDoc),
-  handler: async (ctx, { id }) => {
+  handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
+    const id = ctx.db.normalizeId("tasks", args.id);
+    if (!id) return null;
     const task = await ctx.db.get(id);
     if (!task || task.userId !== userId || task.deletedAt) return null;
     return task;

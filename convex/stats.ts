@@ -2,6 +2,11 @@ import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { day, readSettings, requireUserId } from "./lib";
 
+function nextDay(d: string): string {
+  const [y, m, dd] = d.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, dd + 1)).toISOString().slice(0, 10);
+}
+
 /**
  * Wins: a win is a day with at least `dailyTarget` tasks done.
  * The client sends `days`: the last 60 local dates, oldest first, ending today.
@@ -20,6 +25,12 @@ export const wins = query({
     goalTotals: v.array(v.object({ title: v.string(), total: v.number() })),
     totalDone: v.number(),
     firstFocusSetDay: v.union(v.null(), v.string()),
+    /** The day each milestone was first reached, over all history. Null while locked. */
+    milestones: v.object({
+      streak5: v.union(v.null(), v.string()),
+      streak10: v.union(v.null(), v.string()),
+      tasks100: v.union(v.null(), v.string()),
+    }),
   }),
   handler: async (ctx, { days, week, monthPrefix }) => {
     const userId = await requireUserId(ctx);
@@ -81,6 +92,28 @@ export const wins = query({
       });
     }
 
+    // Milestones over the whole history, so an earned one never relocks once it leaves the window.
+    const wonDays = [...perDay.keys()].filter(won).sort();
+    const reachedStreak = (length: number): string | null => {
+      let runLength = 0;
+      let previous: string | null = null;
+      for (const d of wonDays) {
+        runLength = previous && nextDay(previous) === d ? runLength + 1 : 1;
+        previous = d;
+        if (runLength >= length) return d;
+      }
+      return null;
+    };
+    let running = 0;
+    let tasks100: string | null = null;
+    for (const d of [...perDay.keys()].sort()) {
+      running += perDay.get(d) ?? 0;
+      if (running >= 100) {
+        tasks100 = d;
+        break;
+      }
+    }
+
     const weekRows = week.map((d) => ({ day: d, count: perDay.get(d) ?? 0 }));
     return {
       target: dailyTarget,
@@ -94,6 +127,7 @@ export const wins = query({
       goalTotals,
       totalDone: done.length,
       firstFocusSetDay: finishedSets[0]?.day ?? null,
+      milestones: { streak5: reachedStreak(5), streak10: reachedStreak(10), tasks100 },
     };
   },
 });

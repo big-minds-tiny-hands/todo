@@ -37,7 +37,7 @@ export function reward(prefs: RewardPrefs | undefined, big = false) {
   if (prefs.sounds) chime(big);
 }
 
-type ToastOptions = { action?: { label: string; onClick: () => void }; lime?: boolean; icon?: ReactNode; duration?: number };
+type ToastOptions = { action?: { label: string; onClick: () => void; icon?: ReactNode }; lime?: boolean; icon?: ReactNode; duration?: number };
 
 export function showToast(message: ReactNode, options: ToastOptions = {}) {
   toast.custom(
@@ -55,6 +55,7 @@ export function showToast(message: ReactNode, options: ToastOptions = {}) {
               toast.dismiss(id);
             }}
           >
+            {options.action.icon}
             {options.action.label}
           </button>
         )}

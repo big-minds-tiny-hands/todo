@@ -11,7 +11,8 @@ export default function GlobalError({ error, retry }: { error: unknown; retry: (
   return (
     <html lang="en">
       <body>
-        <h2>Something went wrong.</h2>
+        <h2>Todo stopped working on this screen.</h2>
+        <p>Your saved tasks are safe. Try again, or reload the page.</p>
         <button onClick={() => retry()}>Try again</button>
       </body>
     </html>

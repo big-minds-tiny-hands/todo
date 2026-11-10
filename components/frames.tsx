@@ -4,6 +4,7 @@ import { useConvexAuth, useQuery } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
+import { DevDataDock } from "@/components/dev-data-dock";
 import { OfflineIcon } from "@/components/icons";
 import { TabBar } from "@/components/ui-todo";
 import { useToday } from "@/hooks/use-today";
@@ -35,6 +36,7 @@ export function TabsFrame({ children }: { children: ReactNode }) {
       <OfflineBanner />
       {children}
       <TabBar allTasksCount={all ? all.tasks.length : undefined} />
+      <DevDataDock />
     </div>
   );
 }
@@ -44,6 +46,7 @@ export function FullFrame({ children }: { children: ReactNode }) {
     <div className="phone">
       <OfflineBanner />
       {children}
+      <DevDataDock />
     </div>
   );
 }
@@ -66,7 +69,7 @@ function OfflineBanner() {
     <div style={{ padding: "12px 16px 0" }}>
       <div className="banner" role="status">
         <OfflineIcon style={{ color: "var(--amber-tx)" }} />
-        <span style={{ flex: 1, fontSize: 15 }}>Offline. Your checks save when you&apos;re back.</span>
+        <span style={{ flex: 1, fontSize: 15 }}>You&apos;re offline. Changes save when you reconnect.</span>
       </div>
     </div>
   );

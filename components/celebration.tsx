@@ -60,7 +60,7 @@ export function FocusDone({
             <CheckIcon size={64} style={{ strokeWidth: 2.6 }} />
           </div>
           <p className="eyebrow num" style={{ margin: "18px 0 0" }}>
-            Set done · {time}
+            Finished {time}
           </p>
           <h1 className="h1" id="focus-done-title" style={{ fontSize: 40 }}>
             Focus set done
@@ -77,7 +77,7 @@ export function FocusDone({
         </main>
         <div className="cta" style={{ paddingBottom: 34, position: "relative" }}>
           <button className="btn pri full" onClick={onNext} autoFocus>
-            Pick the next set
+            Pick the next focus set
           </button>
           <button className="btn text full" onClick={onClose}>
             Take a break
