@@ -27,7 +27,7 @@ Tiny ToDo helps a person pick what matters today, finish it, and feel that the d
 
 - Phone first, installed as a PWA, with full layouts for iPad and desktop.
 - Used in short bursts during a working day: open, check something off, plan the next set, close.
-- Time slots are start times, not deadlines. After a slot starts, Tiny ToDo asks whether it happened.
+- Time slots are start times, not deadlines. After a slot ends, Tiny ToDo asks whether it happened, unless the task was picked for Today after that.
 - Daily goals are single checks that come back each day on chosen weekdays, separate from tasks. They carry no counts: "Get 2 tours" is the goal's name.
 - Checks save while offline and sync on reconnect.
 
