@@ -36,7 +36,7 @@ Run it first, and again whenever anything looks off. It is read-only.
 .agents/skills/verify-todo/verify.sh doctor
 ```
 
-It prints the checkout and commit, the deployment, and one `ok` or `FAIL` line per check: dev deployment, server answering, who started the server, test account keys, `ANTHROPIC_API_KEY`, `DEV_TOOLS=true` and the test email on `ALLOWED_EMAILS` in Convex, and e2e installed. It prints no secret values. Exit code 1 means at least one check failed. Fix that before you drive.
+It prints the checkout and commit, the deployment, and one `ok` or `FAIL` line per check: dev deployment, server answering, who started the server, test account keys, `ANTHROPIC_API_KEY`, `DEV_TOOLS=true` in Convex, and e2e installed. It prints no secret values. Exit code 1 means at least one check failed. Fix that before you drive.
 
 ## Drive
 
@@ -94,7 +94,7 @@ It stops only the dev server this helper started, found by the pid in `.e2e/veri
 - Each `e2e run` signs in once. Sign-in is rate limited to 5 a minute, so rapid reruns fail the setup with "Too many tries. Wait a minute, then try again." Wait a minute and rerun. Do not raise the limit.
 - e2e runs one test at a time (`workers: 1`): every test reseeds the same account. Never run two e2e commands at once.
 - The browser pane in the desktop app pauses animation frames while it is hidden. Motion finishes drags on frames, so synthetic swipes there can stick mid-gesture. Prove gestures with `tests/gestures.e2e.ts`, whose headless browser runs frames.
-- Sign-up accepts only emails and `@domains` on the Convex `ALLOWED_EMAILS` list. Use a made-up `@bigmindstinyhands.com` address to prove an allowed sign-up and `@todo.test` for a refused one. Every sign-up adds a real account to the dev deployment.
+- Sign-up is open. Every sign-up adds a real account to the dev deployment, so use a stamped `@todo.test` address.
 
 ## Feature map
 

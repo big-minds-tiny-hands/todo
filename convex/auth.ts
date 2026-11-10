@@ -1,6 +1,5 @@
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
-import { APIError } from "better-auth/api";
 import { betterAuth, type BetterAuthOptions } from "better-auth/minimal";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
@@ -17,18 +16,6 @@ function list(value: string | undefined): string[] {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
-}
-
-/**
- * Who may create an account, for every sign-in method. ALLOWED_EMAILS holds emails and whole
- * domains written as "@example.com". It is empty by default, so sign-up is closed until it is set.
- */
-function canSignUp(email: string) {
-  const address = email.trim().toLowerCase();
-  const domain = address.slice(address.lastIndexOf("@"));
-  return list(process.env.ALLOWED_EMAILS)
-    .map((item) => item.toLowerCase())
-    .some((item) => item === address || (item.startsWith("@") && item === domain));
 }
 
 /** A provider turns on only when both of its credentials are set on the deployment. */
@@ -90,14 +77,6 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
       },
     },
     databaseHooks: {
-      user: {
-        create: {
-          before: async (user) => {
-            if (!canSignUp(user.email)) throw new APIError("FORBIDDEN", { code: "SIGN_UP_NOT_ALLOWED", message: "This email can't sign up." });
-            return { data: user };
-          },
-        },
-      },
       session: {
         create: {
           after: async (session) => {

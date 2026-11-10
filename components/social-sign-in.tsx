@@ -72,8 +72,6 @@ export function SocialSignIn({ next }: { next: string }) {
 /** Messages for the error codes Better Auth puts on the sign-in URL after a failed social sign-in. */
 export function socialErrorMessage(code: string | null): string | null {
   if (!code) return null;
-  if (/sign_up_not_allowed|unable_to_create_user|signup_disabled/i.test(code))
-    return "This account can't sign up for Todo. Use your Big Minds Tiny Hands account, or ask Fardin to add yours.";
   if (/access_denied/i.test(code)) return "Sign-in was canceled.";
   return "Could not sign in with that account. Try again.";
 }
