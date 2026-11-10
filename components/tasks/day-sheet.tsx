@@ -81,7 +81,7 @@ function DayForm({ task, today, onDone }: DayProps & { onDone: () => void }) {
             </button>
           </div>
         </div>
-        <MonthGrid month={month} cells={cells} onSelect={pick} disablePast dayStyle={{ height: 42 }} />
+        <MonthGrid month={month} cells={cells} onSelect={pick} onMonthSwipe={(delta) => setMonth(addMonths(month, delta))} disablePast dayStyle={{ height: 42 }} />
       </div>
 
       <button type="submit" className="btn pri full" disabled={busy || (selected === null && current === null)}>

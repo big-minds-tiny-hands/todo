@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog } from "@base-ui/react/dialog";
+import { Drawer } from "@base-ui/react/drawer";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -92,7 +92,27 @@ export function Ring({ done, target, href }: { done: number; target: number; hre
   );
 }
 
-/** Bottom sheet on phone, centered dialog from 768px. */
+/**
+ * The frame every sheet shares: a bottom sheet on phone that follows a downward drag and closes on distance or a
+ * flick, and a centered dialog from 768px. Base UI's Drawer brings focus trapping, Escape and the swipe physics.
+ */
+export function SheetFrame({ open, onOpenChange, children }: { open: boolean; onOpenChange: (open: boolean) => void; children: ReactNode }) {
+  return (
+    <Drawer.Root open={open} onOpenChange={onOpenChange}>
+      <Drawer.Portal>
+        <Drawer.Backdrop className="scrim" />
+        <Drawer.Viewport className="sheet-viewport">
+          <Drawer.Popup className="sheet">
+            <div className="grab" aria-hidden="true" />
+            <Drawer.Content className="sheet-content">{children}</Drawer.Content>
+          </Drawer.Popup>
+        </Drawer.Viewport>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+}
+
+/** A titled sheet with a close button. */
 export function Sheet({
   open,
   onOpenChange,
@@ -107,26 +127,20 @@ export function Sheet({
   children: ReactNode;
 }) {
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="scrim" />
-        <Dialog.Popup className="sheet">
-          <div className="grab" />
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <div style={{ minWidth: 0 }}>
-              {eyebrow && <p className="eyebrow" style={{ margin: 0 }}>{eyebrow}</p>}
-              <Dialog.Title className="h2">{title}</Dialog.Title>
-            </div>
-            <Dialog.Close className="iconbtn ghost" aria-label="Close">
-              <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
-            </Dialog.Close>
-          </div>
-          {children}
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <SheetFrame open={open} onOpenChange={onOpenChange}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          {eyebrow && <p className="eyebrow" style={{ margin: 0 }}>{eyebrow}</p>}
+          <Drawer.Title className="h2">{title}</Drawer.Title>
+        </div>
+        <Drawer.Close className="iconbtn ghost" aria-label="Close">
+          <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </Drawer.Close>
+      </div>
+      {children}
+    </SheetFrame>
   );
 }
 

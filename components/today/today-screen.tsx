@@ -7,7 +7,8 @@ import { api } from "@/convex/_generated/api";
 import { AddTaskSheet } from "@/components/add-task-sheet";
 import { Celebration } from "@/components/celebration";
 import { LoadingBody } from "@/components/frames";
-import { CheckIcon, ChevronRight, CloseIcon, PlusIcon, RepeatIcon, SunIcon } from "@/components/icons";
+import { CheckIcon, ChevronRight, CloseIcon, ListIcon, PlusIcon, RepeatIcon, SunIcon } from "@/components/icons";
+import { SwipeRow } from "@/components/swipe-row";
 import { Avatar, Check, PriorityDot, Ring } from "@/components/ui-todo";
 import { useToday } from "@/hooks/use-today";
 import { lastDays, weekday, weekOf } from "@/lib/day";
@@ -214,21 +215,26 @@ function PlanBody({ today, onToday }: { today: string; onToday: Task[] }) {
             </h2>
             <div className="card">
               {onToday.map((task) => (
-                <div key={task._id} className="task">
-                  <PriorityDot priority={task.priority} />
-                  <div className="t">
-                    <div className="tt">{task.title}</div>
-                    <div className="m">{pickMeta(task, today)}</div>
+                <SwipeRow
+                  key={task._id}
+                  left={{ label: "All tasks", icon: <ListIcon />, tone: "neutral", leaves: true, run: () => void removeFromToday({ id: task._id, today }) }}
+                >
+                  <div className="task">
+                    <PriorityDot priority={task.priority} />
+                    <div className="t">
+                      <div className="tt">{task.title}</div>
+                      <div className="m">{pickMeta(task, today)}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className="iconbtn ghost"
+                      aria-label={`Send ${task.title} back to All tasks`}
+                      onClick={() => void removeFromToday({ id: task._id, today })}
+                    >
+                      <CloseIcon />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="iconbtn ghost"
-                    aria-label={`Send ${task.title} back to All tasks`}
-                    onClick={() => void removeFromToday({ id: task._id, today })}
-                  >
-                    <CloseIcon />
-                  </button>
-                </div>
+                </SwipeRow>
               ))}
             </div>
           </section>
@@ -241,16 +247,21 @@ function PlanBody({ today, onToday }: { today: string; onToday: Task[] }) {
             </h2>
             <div className="card">
               {pool.map((task) => (
-                <div key={task._id} className="task">
-                  <PriorityDot priority={task.priority} />
-                  <div className="t">
-                    <div className="tt">{task.title}</div>
-                    <div className="m">{pickMeta(task, today)}</div>
+                <SwipeRow
+                  key={task._id}
+                  right={{ label: "Today", icon: <SunIcon />, tone: "lime", leaves: true, run: () => void addToToday({ id: task._id, today }) }}
+                >
+                  <div className="task">
+                    <PriorityDot priority={task.priority} />
+                    <div className="t">
+                      <div className="tt">{task.title}</div>
+                      <div className="m">{pickMeta(task, today)}</div>
+                    </div>
+                    <button type="button" className="iconbtn" aria-label={`Add ${task.title} to Today`} onClick={() => void addToToday({ id: task._id, today })}>
+                      <PlusIcon />
+                    </button>
                   </div>
-                  <button type="button" className="iconbtn" aria-label={`Add ${task.title} to Today`} onClick={() => void addToToday({ id: task._id, today })}>
-                    <PlusIcon />
-                  </button>
-                </div>
+                </SwipeRow>
               ))}
             </div>
           </section>

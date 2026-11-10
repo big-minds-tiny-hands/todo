@@ -1,6 +1,7 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { animate, motion, useDragControls, useMotionValue, useReducedMotion, type PanInfo } from "motion/react";
+import { useLayoutEffect, useRef, type CSSProperties, type PointerEvent as ReactPointerEvent, type MouseEvent as ReactMouseEvent } from "react";
 import { addDays, fromDay, toDay, weekday } from "@/lib/day";
 
 /** One square of the month grid. `past` and `!inMonth` both render dimmed, as in the design. */
@@ -72,21 +73,91 @@ function cellLabel(cell: MonthCell) {
   return cell.hasTasks ? `${name}, has tasks` : name;
 }
 
+const SWIPE_PX = 50;
+const SWIPE_VELOCITY = 400;
+
+/**
+ * Swipe sideways to change month: the grid pulls against the finger, and on release past the threshold (or on a
+ * flick) the next month slides in from the side the finger moved away from. Touch and pen only.
+ * Inside a sheet, data-base-ui-swipe-ignore="x" keeps downward drags for closing the sheet.
+ */
+function useMonthSwipe(month: string, onMonthSwipe?: (delta: 1 | -1) => void) {
+  const x = useMotionValue(0);
+  const opacity = useMotionValue(1);
+  const controls = useDragControls();
+  const reduce = useReducedMotion();
+  const dragged = useRef(false);
+  const entering = useRef<1 | -1 | null>(null);
+  // A month that arrived by swipe starts just off to the side it comes from, before paint, then settles in.
+  useLayoutEffect(() => {
+    const from = entering.current;
+    entering.current = null;
+    if (from === null) return;
+    x.set(reduce ? 0 : from * 48);
+    opacity.set(reduce ? 1 : 0);
+    animate(x, 0, { type: "spring", bounce: 0, duration: 0.35 });
+    animate(opacity, 1, { duration: 0.2 });
+  }, [month, x, opacity, reduce]);
+
+  function onDragEnd(_: PointerEvent, info: PanInfo) {
+    const dx = info.offset.x;
+    const vx = info.velocity.x;
+    const delta: 1 | -1 | null = dx < -SWIPE_PX || vx < -SWIPE_VELOCITY ? 1 : dx > SWIPE_PX || vx > SWIPE_VELOCITY ? -1 : null;
+    if (delta === null || !onMonthSwipe) {
+      animate(x, 0, { type: "spring", velocity: vx, bounce: reduce ? 0 : 0.2, duration: 0.4 });
+      return;
+    }
+    entering.current = delta;
+    onMonthSwipe(delta);
+  }
+
+  return {
+    enabled: Boolean(onMonthSwipe),
+    props: {
+      style: { x, opacity, touchAction: "pan-y" as const },
+      drag: "x" as const,
+      dragListener: false,
+      dragControls: controls,
+      dragMomentum: false,
+      dragConstraints: { left: 0, right: 0 },
+      dragElastic: 0.35,
+      onPointerDown: (event: ReactPointerEvent) => {
+        if (event.pointerType === "mouse") return;
+        dragged.current = false;
+        controls.start(event);
+      },
+      onDragStart: () => {
+        dragged.current = true;
+      },
+      onDragEnd,
+      onClickCapture: (event: ReactMouseEvent) => {
+        if (!dragged.current) return;
+        dragged.current = false;
+        event.preventDefault();
+        event.stopPropagation();
+      },
+    },
+  };
+}
+
 export function MonthGrid({
   month,
   cells,
   onSelect,
+  onMonthSwipe,
   disablePast,
   dayStyle,
 }: {
   month: string;
   cells: MonthCell[];
   onSelect: (day: string) => void;
+  onMonthSwipe?: (delta: 1 | -1) => void;
   disablePast?: boolean;
   dayStyle?: CSSProperties;
 }) {
+  const swipe = useMonthSwipe(month, onMonthSwipe);
   return (
-    <div className="cal" role="grid" aria-label={monthLabel(month)}>
+    <motion.div className="cal" role="grid" aria-label={monthLabel(month)} data-base-ui-swipe-ignore="x" {...(swipe.enabled ? swipe.props : {})}>
       {DOWS.map((d, i) => (
         <span key={i} className="dow" aria-hidden="true">
           {d}
@@ -119,6 +190,6 @@ export function MonthGrid({
           </button>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

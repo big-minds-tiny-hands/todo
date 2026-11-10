@@ -174,7 +174,22 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 
 /* Task rows */
 .task { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 12px 6px 14px; text-decoration: none; color: var(--tx); }
-.task + .task { border-top: 1px solid var(--line); }
+.task + .task, .swipe + .swipe, .swipe + .task, .task + .swipe { border-top: 1px solid var(--line); }
+/* Swipe rows: the row slides over an action layer. Right is toward Today or done, left is away. */
+.swipe { position: relative; overflow: hidden; }
+.swipe-fg { position: relative; }
+.swipe-fg > .task { background-color: var(--s1); }
+.swipe-fg > .task.glow { background: linear-gradient(var(--lime-soft), var(--lime-soft)), var(--s1); }
+.swipe-fg > .task.sel { background-color: var(--s2); }
+.swipe-fg > .slot.now { background-color: var(--s2); }
+.swipe-act { position: absolute; inset: 0; display: flex; align-items: center; gap: 10px; padding: 0 22px; font-size: 15px; font-weight: 600; pointer-events: none; }
+.swipe-act.right { justify-content: flex-start; }
+.swipe-act.left { justify-content: flex-end; }
+.swipe-act.lime { background: var(--lime); color: var(--lime-ink); }
+.swipe-act.red { background: var(--red); color: var(--bg); }
+.swipe-act.neutral { background: var(--s3); color: var(--tx); }
+.swipe-act span { display: inline-grid; }
+.swipe-act .i { width: 22px; height: 22px; stroke-width: 2.4; }
 .task .t { flex: 1; min-width: 0; text-decoration: none; color: inherit; }
 .task .tt { font-size: 16px; line-height: 1.3; color: var(--tx); overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .task .m { font-size: 13px; color: var(--tx2); margin-top: 2px; display: flex; gap: 6px; align-items: center; white-space: nowrap; }
@@ -297,8 +312,18 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
 .bare-input { flex: 1; background: none; border: 0; outline: none; font-size: 15px; height: 40px; color: var(--tx); }
 
 /* Overlays (fixed in the app; absolute on the canvas) */
-.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 40; animation: fade-in 0.18s ease-out; }
-.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; background: var(--s1); border-top: 1px solid var(--line); border-radius: 28px 28px 0 0; padding: 10px 20px calc(24px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 18px; box-shadow: var(--shadow); max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; animation: sheet-up 0.26s cubic-bezier(0.2, 0.9, 0.2, 1); outline: none; }
+/* Sheets are Base UI drawers: they follow a downward drag and close on distance or a flick. The backdrop fades
+   with the drag, and the close is as quick as the flick was hard. Transitions only, so a sheet can be caught mid-close. */
+.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 40; opacity: calc(1 - var(--drawer-swipe-progress, 0)); transition: opacity 0.45s cubic-bezier(0.32, 0.72, 0, 1); }
+.scrim[data-starting-style], .scrim[data-ending-style] { opacity: 0; }
+.scrim[data-swiping] { transition-duration: 0ms; }
+.scrim[data-ending-style] { transition-duration: calc(var(--drawer-swipe-strength, 1) * 400ms); }
+.sheet-viewport { position: fixed; inset: 0; z-index: 41; display: flex; align-items: flex-end; justify-content: center; }
+.sheet-content { display: contents; }
+.sheet { position: relative; width: 100%; background: var(--s1); border-top: 1px solid var(--line); border-radius: 28px 28px 0 0; padding: 10px 20px calc(24px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 18px; box-shadow: var(--shadow); max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; outline: none; transform: translateY(var(--drawer-swipe-movement-y, 0px)); transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1); will-change: transform; }
+.sheet[data-starting-style], .sheet[data-ending-style] { transform: translateY(100%); }
+.sheet[data-swiping] { transition-duration: 0ms; user-select: none; }
+.sheet[data-ending-style] { transition-duration: calc(var(--drawer-swipe-strength, 1) * 400ms); }
 .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--s3); align-self: center; flex: none; }
 .menu { z-index: 41; background: var(--s2); border: 1px solid var(--s3); border-radius: 18px; padding: 6px; box-shadow: var(--shadow); display: flex; flex-direction: column; min-width: 272px; outline: none; }
 .menu .mi { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 12px; background: none; border: 0; color: var(--tx); font-size: 15px; text-align: left; width: 100%; text-decoration: none; cursor: pointer; outline: none; }
@@ -310,7 +335,6 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
 .toast.lime { background: var(--lime); color: var(--lime-ink); }
 .toast.lime .btn { color: var(--lime-ink); }
 @keyframes fade-in { from { opacity: 0; } }
-@keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } }
 
 /* Empty states */
 .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding: 24px 32px; }
@@ -410,7 +434,11 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
   .scroll { padding: 0 32px 40px; gap: 24px; }
   .cta { padding: 16px 32px 32px; flex-direction: row-reverse; justify-content: flex-start; }
   .cta .btn.full { width: auto; min-width: 200px; }
-  .sheet { left: 50%; right: auto; bottom: auto; top: 96px; transform: translateX(-50%); width: calc(100% - 48px); max-width: 520px; border: 1px solid var(--line); border-radius: 28px; padding: 24px 28px 28px; animation-name: fade-in; }
+  /* From iPad up the sheet floats as a centered dialog, so it uses the short floating timing. */
+  .sheet-viewport { align-items: flex-start; padding-top: 96px; }
+  .sheet { width: calc(100% - 48px); max-width: 520px; max-height: calc(100dvh - 140px); border: 1px solid var(--line); border-radius: 28px; padding: 24px 28px 28px; transition: transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.2s cubic-bezier(0.165, 0.84, 0.44, 1); }
+  .sheet[data-starting-style], .sheet[data-ending-style] { transform: translateY(12px) scale(0.98); opacity: 0; }
+  .scrim { transition-duration: 0.2s; }
   .sheet .grab { display: none; }
   .day { height: 56px; font-size: 16px; }
 }

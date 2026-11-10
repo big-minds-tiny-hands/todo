@@ -1,10 +1,11 @@
 "use client";
 
-import { Dialog } from "@base-ui/react/dialog";
+import { Drawer } from "@base-ui/react/drawer";
 import { useMutation } from "convex/react";
 import { useReducer } from "react";
 import { api } from "@/convex/_generated/api";
 import { CheckIcon, ClockIcon } from "@/components/icons";
+import { SheetFrame } from "@/components/ui-todo";
 import { clockLabel, lengthLabel } from "@/lib/day";
 import { showToast } from "@/lib/reward";
 import type { Task } from "./view";
@@ -74,22 +75,18 @@ export function TimeCheck({
   }
 
   return (
-    <Dialog.Root open onOpenChange={(open) => !open && onDismiss(task._id)}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="scrim" />
-        <Dialog.Popup className="sheet">
-          <div className="grab" />
+    <SheetFrame open onOpenChange={(open) => !open && onDismiss(task._id)}>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 6 }}>
             <span className="pill num" style={{ alignSelf: "flex-start" }}>
               <ClockIcon />
               {when}
             </span>
-            <Dialog.Title className="h1" style={{ fontSize: 30 }}>
+            <Drawer.Title className="h1" style={{ fontSize: 30 }}>
               {task.title}
-            </Dialog.Title>
-            <Dialog.Description className="muted" style={{ margin: 0, fontSize: 17 }}>
+            </Drawer.Title>
+            <Drawer.Description className="muted" style={{ margin: 0, fontSize: 17 }}>
               {meeting ? "Did this happen?" : "Did you do this?"}
-            </Dialog.Description>
+            </Drawer.Description>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <button type="button" className="btn pri full" style={{ height: 58, fontSize: 17 }} onClick={() => onDone(task)} autoFocus>
@@ -111,8 +108,6 @@ export function TimeCheck({
               </>
             )}
           </div>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+    </SheetFrame>
   );
 }

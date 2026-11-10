@@ -4,9 +4,10 @@ import { useQuery } from "convex/react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { AddTaskSheet } from "@/components/add-task-sheet";
-import { ChevronRight, ListIcon, PlusIcon, SunIcon } from "@/components/icons";
+import { ChevronRight, ListIcon, PlusIcon, SunIcon, TrashIcon } from "@/components/icons";
+import { SwipeRow } from "@/components/swipe-row";
 import { DaySheet } from "@/components/tasks/day-sheet";
-import { TaskActionsMenu, useAddToToday } from "@/components/tasks/task-actions-menu";
+import { TaskActionsMenu, useAddToToday, useDeleteTask } from "@/components/tasks/task-actions-menu";
 import { TimeSheet } from "@/components/tasks/time-sheet";
 import { creationDay, daysBetween, type Task } from "@/components/tasks/when";
 import { Avatar, PRIORITY_LABEL, PriorityDot } from "@/components/ui-todo";
@@ -166,6 +167,8 @@ export default function AllTasksPage() {
 }
 
 const LONG_PRESS_MS = 500;
+/** A finger that moves this far is swiping or scrolling, not pressing. */
+const PRESS_SLOP_PX = 8;
 
 /** Tap opens the task. Long-press, right-click, or the context-menu key opens its actions. */
 function TaskRow({
@@ -182,44 +185,55 @@ function TaskRow({
   onActions: (anchor: Element) => void;
 }) {
   const addToToday = useAddToToday();
-  const press = useRef<{ timer?: number; fired: boolean }>({ fired: false });
+  const deleteTask = useDeleteTask();
+  const press = useRef<{ timer?: number; fired: boolean; x: number; y: number }>({ fired: false, x: 0, y: 0 });
   const cancel = () => window.clearTimeout(press.current.timer);
 
   return (
-    <div
-      className={`task${highlighted ? " sel" : ""}`}
-      style={highlighted ? { position: "relative", zIndex: 41, borderRadius: 0 } : undefined}
-      onContextMenu={(event) => {
-        event.preventDefault();
-        onActions(event.currentTarget);
-      }}
-      onPointerDown={(event) => {
-        if (event.pointerType !== "touch") return;
-        const row = event.currentTarget;
-        press.current.fired = false;
-        press.current.timer = window.setTimeout(() => {
-          press.current.fired = true;
-          onActions(row);
-        }, LONG_PRESS_MS);
-      }}
-      onPointerUp={cancel}
-      onPointerCancel={cancel}
-      onPointerLeave={cancel}
-      onClickCapture={(event) => {
-        if (!press.current.fired) return;
-        press.current.fired = false;
-        event.preventDefault();
-        event.stopPropagation();
-      }}
+    <SwipeRow
+      right={{ label: "Today", icon: <SunIcon />, tone: "lime", leaves: true, run: () => void addToToday(task, today) }}
+      left={{ label: "Delete", icon: <TrashIcon />, tone: "red", leaves: true, run: () => void deleteTask(task) }}
     >
-      <Link href={`/task/${task._id}`} className="t" style={{ textDecoration: "none" }}>
-        <div className="tt">{task.title}</div>
-        <div className="m">{meta}</div>
-      </Link>
-      <button type="button" className="iconbtn ghost" aria-label={`Add ${task.title} to Today`} onClick={() => void addToToday(task, today)}>
-        <SunIcon />
-      </button>
-    </div>
+      <div
+        className={`task${highlighted ? " sel" : ""}`}
+        style={highlighted ? { position: "relative", zIndex: 41, borderRadius: 0 } : undefined}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          onActions(event.currentTarget);
+        }}
+        onPointerDown={(event) => {
+          if (event.pointerType !== "touch") return;
+          const row = event.currentTarget;
+          press.current.fired = false;
+          press.current.x = event.clientX;
+          press.current.y = event.clientY;
+          press.current.timer = window.setTimeout(() => {
+            press.current.fired = true;
+            onActions(row);
+          }, LONG_PRESS_MS);
+        }}
+        onPointerMove={(event) => {
+          if (Math.hypot(event.clientX - press.current.x, event.clientY - press.current.y) > PRESS_SLOP_PX) cancel();
+        }}
+        onPointerUp={cancel}
+        onPointerCancel={cancel}
+        onPointerLeave={cancel}
+        onClickCapture={(event) => {
+          if (!press.current.fired) return;
+          press.current.fired = false;
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+      >
+        <Link href={`/task/${task._id}`} className="t" style={{ textDecoration: "none" }}>
+          <div className="tt">{task.title}</div>
+          <div className="m">{meta}</div>
+        </Link>
+        <button type="button" className="iconbtn ghost" aria-label={`Add ${task.title} to Today`} onClick={() => void addToToday(task, today)}>
+          <SunIcon />
+        </button>
+      </div>
+    </SwipeRow>
   );
 }
 

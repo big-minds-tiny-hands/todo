@@ -1,31 +1,45 @@
 "use client";
 
 import { Menu } from "@base-ui/react/menu";
+import type { OptimisticLocalStore } from "convex/browser";
 import { useMutation } from "convex/react";
 import type { ReactElement } from "react";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { ArrowDown, ArrowUp, CalendarIcon, CheckIcon, ClockIcon, MinusIcon, SunIcon, TrashIcon } from "@/components/icons";
 import { PRIORITY_LABEL, PriorityDot } from "@/components/ui-todo";
 import { showToast } from "@/lib/reward";
 import { isOnToday, type Task } from "@/components/tasks/when";
 
-/** Soft delete with an Undo toast. */
-export function useDeleteTask() {
-  const remove = useMutation(api.tasks.remove);
-  const restore = useMutation(api.tasks.restore);
-  return async (task: Task) => {
-    await remove({ id: task._id });
-    showToast(`Deleted “${task.title}”`, {
-      action: { label: "Undo", onClick: () => void restore({ id: task._id }) },
+/** Takes a task out of All tasks at once, so a swiped or deleted row leaves the list without waiting on the server. */
+function leaveAllTasks(store: OptimisticLocalStore, id: Id<"tasks">, onToday: boolean) {
+  for (const { args, value } of store.getAllQueries(api.tasks.all)) {
+    if (!value || !value.tasks.some((t) => t._id === id)) continue;
+    store.setQuery(api.tasks.all, args, {
+      tasks: value.tasks.filter((t) => t._id !== id),
+      onTodayCount: value.onTodayCount + (onToday ? 1 : 0),
     });
+  }
+}
+
+/** Soft delete with an Undo toast. The toast shows at once; Undo waits for the delete to land, then restores. */
+export function useDeleteTask() {
+  const remove = useMutation(api.tasks.remove).withOptimisticUpdate((store, { id }) => leaveAllTasks(store, id, false));
+  const restore = useMutation(api.tasks.restore);
+  return (task: Task) => {
+    const removing = remove({ id: task._id });
+    showToast(`Deleted “${task.title}”`, {
+      action: { label: "Undo", onClick: () => void removing.then(() => restore({ id: task._id })) },
+    });
+    return removing;
   };
 }
 
 export function useAddToToday() {
-  const addToToday = useMutation(api.tasks.addToToday);
-  return async (task: Task, today: string) => {
-    await addToToday({ id: task._id, today });
+  const addToToday = useMutation(api.tasks.addToToday).withOptimisticUpdate((store, { id }) => leaveAllTasks(store, id, true));
+  return (task: Task, today: string) => {
     showToast("Added to Today", { icon: <CheckIcon size={18} style={{ strokeWidth: 2.6 }} />, duration: 2000 });
+    return addToToday({ id: task._id, today });
   };
 }
 

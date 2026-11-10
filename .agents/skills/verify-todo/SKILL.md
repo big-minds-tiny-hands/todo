@@ -91,6 +91,9 @@ It stops only the dev server this helper started, found by the pid in `.e2e/veri
 - `/settings` has two `Today` links: the back link and the tab. Use the tab from `/tasks`, which has one, or scope to the navigation named `Main`.
 - The Next.js dev tools button sits at the bottom left in dev builds. An error badge on it covers the `Today` tab. If a tap fails with `nextjs-portal ... intercepts pointer events`, read the dev server log for the error and fix it. Do not hide the overlay.
 - Days are the browser's local dates. A run that crosses midnight sees Today empty out. That is the product rule: unfinished tasks go back to All tasks.
+- Each `e2e run` signs in once. Sign-in is rate limited to 5 a minute, so rapid reruns fail the setup with "Too many tries. Wait a minute, then try again." Wait a minute and rerun. Do not raise the limit.
+- e2e runs one test at a time (`workers: 1`): every test reseeds the same account. Never run two e2e commands at once.
+- The browser pane in the desktop app pauses animation frames while it is hidden. Motion finishes drags on frames, so synthetic swipes there can stick mid-gesture. Prove gestures with `tests/gestures.e2e.ts`, whose headless browser runs frames.
 - Sign-up accepts only emails and `@domains` on the Convex `ALLOWED_EMAILS` list. Use a made-up `@bigmindstinyhands.com` address to prove an allowed sign-up and `@todo.test` for a refused one. Every sign-up adds a real account to the dev deployment.
 
 ## Feature map

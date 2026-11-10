@@ -6,6 +6,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { CheckIcon, ClockIcon, ExpandIcon, FlameIcon, PlusIcon, UndoIcon } from "@/components/icons";
+import { SwipeRow, type SwipeAction } from "@/components/swipe-row";
 import { Check } from "@/components/ui-todo";
 import { clockLabel, longDate } from "@/lib/day";
 import { reward, showToast, type RewardPrefs } from "@/lib/reward";
@@ -89,22 +90,30 @@ export function FocusSection({ focus, streak, ...props }: { focus: Task[]; strea
         const glow = task._id === props.justChecked && task.done;
         const meta = focusMeta(task, props);
         return (
-          <div key={task._id} className={["task", task.done && "done", glow && "glow"].filter(Boolean).join(" ")} style={glow ? { position: "relative" } : undefined}>
-            <Check size="lg" checked={task.done} onChange={(next) => props.onCheck(task, next)} label={`${task.done ? "Undo" : "Complete"} ${task.title}`} />
-            <div className="t">
-              <div className="tt">{task.title}</div>
-              {meta && <div className="m">{meta}</div>}
+          <SwipeRow key={task._id} right={completeAction(task, props.onCheck)}>
+            <div className={["task", task.done && "done", glow && "glow"].filter(Boolean).join(" ")} style={glow ? { position: "relative" } : undefined}>
+              <Check size="lg" checked={task.done} onChange={(next) => props.onCheck(task, next)} label={`${task.done ? "Undo" : "Complete"} ${task.title}`} />
+              <div className="t">
+                <div className="tt">{task.title}</div>
+                {meta && <div className="m">{meta}</div>}
+              </div>
+              {glow && (
+                <span className="plus1" aria-hidden="true" style={{ left: 34, top: -14 }}>
+                  +1
+                </span>
+              )}
             </div>
-            {glow && (
-              <span className="plus1" aria-hidden="true" style={{ left: 34, top: -14 }}>
-                +1
-              </span>
-            )}
-          </div>
+          </SwipeRow>
         );
       })}
     </section>
   );
+}
+
+/** Swipe right on an open Today task to complete it, with the same reward as its check. */
+function completeAction(task: Task, onCheck: CheckProps["onCheck"]): SwipeAction | undefined {
+  if (task.done) return undefined;
+  return { label: "Done", icon: <CheckIcon />, tone: "lime", run: () => onCheck(task, true) };
 }
 
 export function ScheduleSection({ schedule, minutes, onCheck }: { schedule: Task[]; minutes: number; onCheck: CheckProps["onCheck"] }) {
@@ -119,14 +128,16 @@ export function ScheduleSection({ schedule, minutes, onCheck }: { schedule: Task
         {schedule.map((task) => {
           const now = !task.done && isNow(task, minutes);
           return (
-            <div key={task._id} className={["task slot", now && "now", task.done && "done"].filter(Boolean).join(" ")}>
-              <span className="time">{clockLabel(task.startTime!)}</span>
-              <div className="t">
-                <div className="tt">{task.title}</div>
-                <div className="m">{slotMeta(task, now)}</div>
+            <SwipeRow key={task._id} right={completeAction(task, onCheck)}>
+              <div className={["task slot", now && "now", task.done && "done"].filter(Boolean).join(" ")}>
+                <span className="time">{clockLabel(task.startTime!)}</span>
+                <div className="t">
+                  <div className="tt">{task.title}</div>
+                  <div className="m">{slotMeta(task, now)}</div>
+                </div>
+                <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`${task.done ? "Undo" : "Complete"} ${task.title}`} />
               </div>
-              <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`${task.done ? "Undo" : "Complete"} ${task.title}`} />
-            </div>
+            </SwipeRow>
           );
         })}
       </div>

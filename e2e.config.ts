@@ -17,6 +17,8 @@ export default {
       system: 'You are a thorough QA agent testing Todo, a daily planner. Verify every outcome on screen.',
     },
   },
+  // Every test signs in as the one dev test account and reseeds its data, so tests must not run side by side.
+  workers: 1,
   targets: [
     {
       // Melina uses Todo on her phone first, so tests run at a phone viewport.

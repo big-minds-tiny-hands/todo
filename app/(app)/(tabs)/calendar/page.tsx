@@ -62,7 +62,7 @@ export default function CalendarPage() {
 
       <main className="scroll cols" style={{ gridTemplateAreas: "'cal day'" }}>
         <section className="card" style={{ gridArea: "cal", padding: "14px 10px 10px" }}>
-          <MonthGrid month={month} cells={cells} onSelect={(day) => setView({ month: monthOf(day), selected: day })} />
+          <MonthGrid month={month} cells={cells} onSelect={(day) => setView({ month: monthOf(day), selected: day })} onMonthSwipe={goMonth} />
         </section>
 
         <section style={{ gridArea: "day" }} aria-live="polite">
