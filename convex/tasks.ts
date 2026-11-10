@@ -78,16 +78,26 @@ export const today = query({
 /** Open tasks off Today: the pool by priority, and tasks planned for a later day. */
 export const all = query({
   args: { today: day },
-  returns: v.object({ pool: v.array(taskDoc), planned: v.array(taskDoc), onTodayCount: v.number(), hasAnyTask: v.boolean() }),
+  returns: v.object({
+    pool: v.array(taskDoc),
+    planned: v.array(taskDoc),
+    // Old installed clients read `tasks` until they reload onto this release. Remove after it has been live a day.
+    tasks: v.array(taskDoc),
+    onTodayCount: v.number(),
+    hasAnyTask: v.boolean(),
+  }),
   handler: async (ctx, { today }) => {
     const userId = await requireUserId(ctx);
     const open = await openTasks(ctx, userId);
     const at = (kind: "today" | "planned" | "pool") => open.filter((t) => placeOf(t, today).kind === kind);
     // Tells a first visit (nothing ever added) from a cleared list, so each gets its own empty state.
     const anyTask = open.length > 0 || (await ctx.db.query("tasks").withIndex("by_user_done", (q) => q.eq("userId", userId)).first()) !== null;
+    const pool = at("pool").sort(byPriority);
+    const planned = at("planned").sort(byPlannedDay);
     return {
-      pool: at("pool").sort(byPriority),
-      planned: at("planned").sort(byPlannedDay),
+      pool,
+      planned,
+      tasks: [...pool, ...planned],
       onTodayCount: at("today").length,
       hasAnyTask: anyTask,
     };
