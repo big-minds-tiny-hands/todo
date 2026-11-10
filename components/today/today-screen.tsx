@@ -255,7 +255,6 @@ function PlanBody({
             </PriorityGroups>
           </section>
         )}
-        {goals}
         {pool.length > 0 && (
           <section className="stack">
             <h2 className="stitle">
@@ -285,6 +284,7 @@ function PlanBody({
             </PriorityGroups>
           </section>
         )}
+        {goals}
       </main>
       <div className="cta">
         {onToday.length > 0 ? (
