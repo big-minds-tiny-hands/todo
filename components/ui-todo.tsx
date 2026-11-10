@@ -167,7 +167,10 @@ export function TabBar({ allTasksCount }: { allTasksCount?: number }) {
   );
 }
 
-/** The one small worded button every row action uses. `name` is the accessible name when it says more than the words. */
+/**
+ * The one small worded button every row action uses. `name` is the accessible name when it says more than the
+ * words. It must contain the words, so voice control finds the button by what it shows (WCAG 2.5.3).
+ */
 export function RowAction({
   children,
   name,

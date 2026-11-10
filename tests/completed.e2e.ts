@@ -18,7 +18,7 @@ test('a task finished from Today shows on Completed, and unchecking it reopens i
   await screen.getByRole('button', 'Close').tap();
 
   await screen.getByRole('link', 'Today').tap();
-  await expect(screen.getByRole('button', `Send ${TASK} back to All tasks`)).toBeVisible();
+  await expect(screen.getByRole('button', `Not today: ${TASK}`)).toBeVisible();
   await screen.getByRole('button', `Complete ${TASK}`).tap();
   await expect(screen.getByRole('button', `Complete ${TASK}`)).toBeHidden();
 

@@ -252,7 +252,7 @@ function PlanBody({
                   left={{ label: "All tasks", icon: <ListIcon />, tone: "neutral", leaves: true, run: () => void removeFromToday({ id: task._id, today }) }}
                 >
                   <OpenTaskRow task={task} meta={pickMeta(task, today, { priority: false })} onCheck={onCheck}>
-                    <RowAction name={`Send ${task.title} back to All tasks`} onClick={() => void removeFromToday({ id: task._id, today })}>
+                    <RowAction name={`Not today: ${task.title}`} onClick={() => void removeFromToday({ id: task._id, today })}>
                       Not today
                     </RowAction>
                   </OpenTaskRow>
@@ -359,7 +359,7 @@ function NextSetBody({ data, open, today, onCheck }: { data: TodayData; open: Ta
           <PriorityGroups tasks={left} heading="h3">
             {(task) => (
               <OpenTaskRow task={task} meta={pickMeta(task, today, { priority: false })} onCheck={onCheck}>
-                <RowAction name={`Add ${task.title} to the next focus set`} disabled={picks.length >= limit} onClick={() => toggle(task._id)}>
+                <RowAction name={`Pick ${task.title}`} disabled={picks.length >= limit} onClick={() => toggle(task._id)}>
                   Pick
                 </RowAction>
               </OpenTaskRow>
