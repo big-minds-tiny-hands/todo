@@ -10,8 +10,6 @@ import { authClient } from "@/lib/auth-client";
 type SignUpError = { field: "email" | "password" | "form"; message: string };
 
 function signUpError(status: number, code: string | undefined): SignUpError {
-  if (status === 403 || code === "SIGN_UP_NOT_ALLOWED")
-    return { field: "email", message: "This email can't sign up for Todo. Use your Big Minds Tiny Hands email, or ask Fardin to add this one." };
   if (status === 422 || code?.startsWith("USER_ALREADY_EXISTS")) return { field: "email", message: "This email already has an account. Sign in instead." };
   if (code === "PASSWORD_TOO_SHORT") return { field: "password", message: "Use at least 8 characters for your password." };
   if (status === 429) return { field: "form", message: "Too many tries. Wait a few minutes, then try again." };
@@ -27,7 +25,6 @@ function ErrorText({ id, message }: { id: string; message: string }) {
   );
 }
 
-/** The server decides who may sign up: emails and domains in ALLOWED_EMAILS. */
 export default function SignUpPage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -57,12 +54,7 @@ export default function SignUpPage() {
           <span style={{ fontFamily: "var(--fd)", fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em" }}>Todo</span>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <h1 className="h1">Create your account</h1>
-          <p className="muted" style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>
-            Use your Big Minds Tiny Hands email.
-          </p>
-        </div>
+        <h1 className="h1">Create your account</h1>
 
         <SocialSignIn next="/" />
 

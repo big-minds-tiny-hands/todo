@@ -37,7 +37,7 @@ export default {
     },
   ],
   credentials: {
-    // The dev test account. Its email must be on the Convex dev ALLOWED_EMAILS list.
+    // The dev test account.
     user: { username: process.env.TEST_USER_EMAIL ?? '', password: () => process.env.TEST_USER_PASSWORD ?? '' },
   },
 } satisfies E2EConfig;

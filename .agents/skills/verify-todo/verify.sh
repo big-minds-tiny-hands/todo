@@ -59,7 +59,6 @@ doctor() {
   check ".env.local has TEST_USER_EMAIL and TEST_USER_PASSWORD" "has_env TEST_USER_EMAIL && has_env TEST_USER_PASSWORD"
   check ".env.local has ANTHROPIC_API_KEY (agent steps)" "has_env ANTHROPIC_API_KEY"
   check "Convex DEV_TOOLS is true (dev data dock)" "[ \"\$(bunx convex env get DEV_TOOLS 2>/dev/null)\" = true ]"
-  check "Convex ALLOWED_EMAILS covers the test account" "bunx convex env get ALLOWED_EMAILS 2>/dev/null | tr ',' '\n' | grep -qixF \"\$(env_value TEST_USER_EMAIL)\""
   check "e2e installed" "[ -x node_modules/.bin/e2e ]"
   return $fail
 }

@@ -41,7 +41,7 @@ Sentry reports errors and PostHog reports product usage. Both are off in `next d
 
 ## Sign-in
 
-Email and password, plus Google and Microsoft when their credentials are set. Anyone on the sign-up list can make an account at `/sign-up`, by any method. The list is the Convex env var `ALLOWED_EMAILS`: a comma list of emails and whole domains written as `@bigmindstinyhands.com`. Empty means nobody can sign up. To make an account for someone, run `bunx convex run admin:createUser '{"email":"…","password":"…","name":"…"}'`. A Google or Microsoft account with the same email links to it.
+Email and password, plus Google and Microsoft when their credentials are set. Anyone can make an account at `/sign-up`, by any method. To make an account for someone, run `bunx convex run admin:createUser '{"email":"…","password":"…","name":"…"}'`. A Google or Microsoft account with the same email links to it.
 
 Convex env vars (set with `bunx convex env set NAME value`, add `--prod` for production):
 
@@ -49,7 +49,6 @@ Convex env vars (set with `bunx convex env set NAME value`, add `--prod` for pro
 | --- | --- | --- |
 | `BETTER_AUTH_SECRET` | yes | `openssl rand -base64 32`, a different value per deployment |
 | `SITE_URL` | yes | The app origin: `http://localhost:3001` on dev, `https://todo-kappa-eight-48.vercel.app` on production |
-| `ALLOWED_EMAILS` | yes | Who may sign up: emails and `@domain` entries, comma separated |
 | `TRUSTED_ORIGINS` | no | Extra origins allowed to call auth, such as a Vercel preview URL |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | no | From a Google Cloud OAuth client (Web application). Authorized redirect URI: `<SITE_URL>/api/auth/callback/google` |
 | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` | no | From a Microsoft Entra app registration (Web platform). Redirect URI: `<SITE_URL>/api/auth/callback/microsoft` |

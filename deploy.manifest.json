@@ -38,8 +38,7 @@
     "deployKeyEnv": "CONVEX_DEPLOY_KEY",
     "requiredConvexEnv": [
       "BETTER_AUTH_SECRET",
-      "SITE_URL",
-      "ALLOWED_EMAILS"
+      "SITE_URL"
     ],
     "verify": "bunx convex function-spec --prod",
     "optionalConvexEnv": [
