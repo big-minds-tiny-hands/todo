@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TITLES: [RegExp, string][] = [
   [/^\/$/, "Today"],
   [/^\/tasks$/, "All tasks"],
+  [/^\/tasks\/completed$/, "Completed"],
   [/^\/calendar$/, "Calendar"],
   [/^\/wins$/, "Your wins"],
   [/^\/settings$/, "Settings"],
