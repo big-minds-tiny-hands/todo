@@ -35,11 +35,19 @@ export function sentryConfig(env: SentryEnv = readEnv()): SentryConfig | null {
   return { dsn: env.dsn, environment: env.environment || "development" };
 }
 
+/** Click and input breadcrumbs quote aria-labels, and many labels hold the task title. Task text stays in the owner's account. */
+export function dropUiBreadcrumb<T extends { category?: string }>(
+  breadcrumb: T,
+): T | null {
+  return breadcrumb.category?.startsWith("ui.") ? null : breadcrumb;
+}
+
 export function sentryInitOptions(config: SentryConfig) {
   return {
     dsn: config.dsn,
     environment: config.environment,
     sendDefaultPii: false,
     tracesSampleRate: 1,
+    beforeBreadcrumb: dropUiBreadcrumb,
   };
 }
