@@ -37,7 +37,7 @@ Sentry reports errors and PostHog reports product usage. Both are off in `next d
 
 - Sentry: set `NEXT_PUBLIC_SENTRY_DSN` to the `todo` project DSN in `.env.example`. `SENTRY_AUTH_TOKEN` at build time uploads source maps. Browser events go through `/monitoring`.
 - PostHog: set `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN`. Events go to the shared US project 548413 through `/ingest`, each tagged `app: "todo"`.
-- Capture: nothing is masked. Session replay records page text, input values, images, console logs and network headers and bodies. Sentry sends default PII. Password fields stay masked by the recorder. Add `data-ph-block` to an element to keep it out of replays.
+- Capture: session replay masks all page text and input values and records no network headers or bodies. Autocapture keeps no element text or attributes. Sentry sends no default PII. Add `data-ph-block` to an element to keep it out of replays entirely.
 
 ## Sign-in
 

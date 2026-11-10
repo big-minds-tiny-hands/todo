@@ -37,7 +37,6 @@ Todo helps a person pick what matters today, finish it, and feel that the day wa
 - Terminology lives in `GLOSSARY.md`: Task, All tasks, Today, Focus set, Back to All tasks, Win, Daily goal, Time slot, Planned day, Calendar.
 - Stack: Next.js with Bun, Convex, Better Auth, shadcn/ui on Base UI, Vercel.
 - Tasks are private to their owner. There is no sharing between users.
-- Open decision: session replay and Sentry record page text and inputs unmasked (main, PR #7), so task titles that name children reach PostHog and Sentry. That conflicts with principle 5 below. Either mask task text (`data-ph-block` on task titles and notes) or change the principle.
 - Open decision: who can sign up. Today sign-up is limited to the emails and domains on the `ALLOWED_EMAILS` list, and the sign-up copy points to a Big Minds Tiny Hands email. Opening Todo to anyone needs a decision on open sign-up and new copy.
 - Not decided: pricing, a public launch, and any team or shared features.
 

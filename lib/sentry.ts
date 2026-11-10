@@ -39,7 +39,7 @@ export function sentryInitOptions(config: SentryConfig) {
   return {
     dsn: config.dsn,
     environment: config.environment,
-    sendDefaultPii: true,
+    sendDefaultPii: false,
     tracesSampleRate: 1,
   };
 }

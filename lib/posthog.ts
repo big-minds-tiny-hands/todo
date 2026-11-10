@@ -34,15 +34,19 @@ export function posthogInitOptions(config: PostHogConfig): Partial<PostHogInitOp
     // Sentry owns errors.
     capture_exceptions: false,
     enable_recording_console_log: true,
-    mask_all_text: false,
-    mask_all_element_attributes: false,
-    // Local values win over the shared project's remote masking, which blocks
-    // images and masks inputs for another app.
+    // Task text can name children and families (PRODUCT.md principle 5), and it shows up
+    // in labels as well as text, so autocapture keeps no element text or attributes.
+    mask_all_text: true,
+    mask_all_element_attributes: true,
+    // Replays keep layout, taps and screens, never words or typed values. Auth requests
+    // carry the password and session cookie, so no headers or bodies either. Local values
+    // win over the shared project's remote masking.
     session_recording: {
-      maskAllInputs: false,
+      maskAllInputs: true,
+      maskTextSelector: "*",
       blockSelector: "[data-ph-block]",
-      recordHeaders: true,
-      recordBody: true,
+      recordHeaders: false,
+      recordBody: false,
     },
     loaded: (posthog) => {
       posthog.register({ app: POSTHOG_APP, environment: config.environment });
