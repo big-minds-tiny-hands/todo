@@ -9,15 +9,17 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { ArrowDown, ArrowUp, CalendarIcon, CheckIcon, ClockIcon, MinusIcon, SunIcon, TrashIcon } from "@/components/icons";
 import { PRIORITY_LABEL, PriorityDot } from "@/components/ui-todo";
 import { showToast } from "@/lib/reward";
-import { isOnToday, type Task } from "@/components/tasks/when";
+import type { Task } from "@/components/tasks/when";
+import { placeOf } from "@/lib/placement";
 
 /** Takes a task out of All tasks at once, so a swiped or deleted row leaves the list without waiting on the server. */
 function leaveAllTasks(store: OptimisticLocalStore, id: Id<"tasks">, onToday: boolean) {
   for (const { args, value } of store.getAllQueries(api.tasks.all)) {
-    if (!value || !value.tasks.some((t) => t._id === id)) continue;
+    if (!value || ![...value.pool, ...value.planned].some((t) => t._id === id)) continue;
     store.setQuery(api.tasks.all, args, {
       ...value,
-      tasks: value.tasks.filter((t) => t._id !== id),
+      pool: value.pool.filter((t) => t._id !== id),
+      planned: value.planned.filter((t) => t._id !== id),
       onTodayCount: value.onTodayCount + (onToday ? 1 : 0),
     });
   }
@@ -78,7 +80,7 @@ export function TaskActionsMenu({
   const removeFromToday = useMutation(api.tasks.removeFromToday);
   const addToToday = useAddToToday();
   const deleteTask = useDeleteTask();
-  const onToday = isOnToday(task, today);
+  const onToday = placeOf(task, today).kind === "today";
 
   return (
     <Menu.Root open={open} onOpenChange={onOpenChange}>

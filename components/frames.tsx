@@ -37,7 +37,7 @@ export function TabsFrame({ children }: { children: ReactNode }) {
     <div className="phone" id="content" tabIndex={-1}>
       <OfflineBanner />
       {children}
-      <TabBar allTasksCount={all ? all.tasks.length : undefined} />
+      <TabBar allTasksCount={all ? all.pool.length + all.planned.length : undefined} />
       <DevDataDock />
     </div>
   );

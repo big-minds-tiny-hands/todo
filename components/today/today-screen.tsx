@@ -17,7 +17,8 @@ import { AddButton, DoneToday, FocusSection, GoalsSection, MoreToday, NewDayBann
 import { TimeCheck, useDismissedSlots } from "./time-check";
 import { useCheck } from "./use-check";
 import { useMoment } from "./use-moment";
-import { byPriority, deriveView, pickMeta, slotToCheck, type GoalRow, type Task, type TodayData } from "./view";
+import { byPriority } from "@/lib/placement";
+import { deriveView, pickMeta, slotToCheck, type GoalRow, type Task, type TodayData } from "./view";
 
 type When = "today" | "later";
 
@@ -205,7 +206,7 @@ function PlanBody({ today, onToday }: { today: string; onToday: Task[] }) {
   const all = useQuery(api.tasks.all, { today });
   const addToToday = useMutation(api.tasks.addToToday);
   const removeFromToday = useMutation(api.tasks.removeFromToday);
-  const pool = all?.tasks ?? [];
+  const pool = all?.pool ?? [];
   return (
     <>
       <main className="scroll">

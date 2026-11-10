@@ -10,7 +10,8 @@ import { LoadingBody } from "@/components/frames";
 import { CloseIcon } from "@/components/icons";
 import { PriorityDot } from "@/components/ui-todo";
 import { useToday } from "@/hooks/use-today";
-import { byPriority, openToday, pickMeta, type Task } from "./view";
+import { byPriority } from "@/lib/placement";
+import { openToday, pickMeta, type Task } from "./view";
 
 /** Tasks picked for a focus set, in pick order. Picks that leave `available` drop out on their own. */
 export function usePicks(available: Task[], limit: number, preset: Id<"tasks">[] = []) {

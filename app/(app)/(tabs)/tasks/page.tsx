@@ -53,7 +53,7 @@ export default function AllTasksPage() {
 
   if (data === undefined) return <AllTasksLoading name={name} />;
 
-  if (data.tasks.length === 0) {
+  if (data.pool.length === 0) {
     return (
       <>
         <header className="head">
@@ -97,10 +97,10 @@ export default function AllTasksPage() {
     );
   }
 
-  const groups = PRIORITIES.map((priority) => ({ priority, items: data.tasks.filter((t) => t.priority === priority) })).filter(
+  const groups = PRIORITIES.map((priority) => ({ priority, items: data.pool.filter((t) => t.priority === priority) })).filter(
     (g) => g.items.length > 0,
   );
-  const activeTask = active ? data.tasks.find((t) => t._id === active.id) : undefined;
+  const activeTask = active ? data.pool.find((t) => t._id === active.id) : undefined;
   const activeGroup = activeTask ? groups.find((g) => g.priority === activeTask.priority)?.items : undefined;
   const close = (open: boolean) => {
     if (!open) setActive(null);
@@ -111,7 +111,7 @@ export default function AllTasksPage() {
       <header className="head">
         <div>
           <p className="eyebrow num">
-            {data.tasks.length} {data.tasks.length === 1 ? "task" : "tasks"}
+            {data.pool.length} {data.pool.length === 1 ? "task" : "tasks"}
           </p>
           <h1 className="h1">All tasks</h1>
         </div>

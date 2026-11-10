@@ -45,12 +45,6 @@ export function deriveView(
   return { kind: "nextSet", data, open };
 }
 
-const RANK = { high: 0, normal: 1, low: 2 } as const;
-
-export function byPriority(a: Task, b: Task) {
-  return RANK[a.priority] - RANK[b.priority] || a.order - b.order;
-}
-
 export function checklistLabel(task: Task) {
   const done = task.checklist.filter((s) => s.done).length;
   return `Checklist ${done}/${task.checklist.length}`;

@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { byPriority, day, isOnDay, ownTask, readSettings, requireUserId, settingsValue, taskDoc, type Task } from "./lib";
+import { byPlannedDay, byPriority, placeOf } from "../lib/placement";
+import { day, ownTask, readSettings, requireUserId, settingsValue, taskDoc, type Task } from "./lib";
 import { priority, taskKind } from "./schema";
 
 async function openTasks(ctx: Parameters<typeof requireUserId>[0], userId: string) {
@@ -45,7 +46,7 @@ export const today = query({
     const userId = await requireUserId(ctx);
     const open = await openTasks(ctx, userId);
     const doneToday = (await doneOn(ctx, userId, today)).sort((a, b) => (a.doneAt ?? 0) - (b.doneAt ?? 0));
-    const onToday = open.filter((t) => isOnDay(t, today));
+    const onToday = open.filter((t) => placeOf(t, today).kind === "today");
     const everything = [...onToday, ...doneToday];
     const focusSet = currentFocusSet(everything, today);
     const focus = everything
@@ -54,7 +55,7 @@ export const today = query({
     const focusIds = new Set(focus.map((t) => t._id));
     const schedule = everything.filter((t) => t.startTime && !focusIds.has(t._id)).sort(byTime);
     const rest = onToday.filter((t) => !t.startTime && !focusIds.has(t._id)).sort(byPriority);
-    const returnedCount = open.filter((t) => t.todayDay === yesterday && !isOnDay(t, today)).length;
+    const returnedCount = open.filter((t) => t.todayDay === yesterday && placeOf(t, today).kind !== "today").length;
     return {
       focus,
       focusSet,
@@ -62,24 +63,45 @@ export const today = query({
       rest,
       doneToday,
       returnedCount,
-      allTasksCount: open.length,
+      allTasksCount: open.filter((t) => placeOf(t, today).kind === "pool").length,
       hasAnyTask: open.length + doneToday.length > 0,
       settings: await readSettings(ctx, userId),
     };
   },
 });
 
-/** All open tasks by priority, plus how many of them are on Today. */
+/** Open tasks off Today: the pool by priority, and tasks planned for a later day. */
 export const all = query({
   args: { today: day },
-  returns: v.object({ tasks: v.array(taskDoc), onTodayCount: v.number(), hasAnyTask: v.boolean() }),
+  returns: v.object({ pool: v.array(taskDoc), planned: v.array(taskDoc), onTodayCount: v.number(), hasAnyTask: v.boolean() }),
   handler: async (ctx, { today }) => {
     const userId = await requireUserId(ctx);
     const open = await openTasks(ctx, userId);
-    const onTodayCount = open.filter((t) => isOnDay(t, today)).length;
+    const at = (kind: "today" | "planned" | "pool") => open.filter((t) => placeOf(t, today).kind === kind);
     // Tells a first visit (nothing ever added) from a cleared list, so each gets its own empty state.
     const anyTask = open.length > 0 || (await ctx.db.query("tasks").withIndex("by_user_done", (q) => q.eq("userId", userId)).first()) !== null;
-    return { tasks: open.filter((t) => !isOnDay(t, today)).sort(byPriority), onTodayCount, hasAnyTask: anyTask };
+    return {
+      pool: at("pool").sort(byPriority),
+      planned: at("planned").sort(byPlannedDay),
+      onTodayCount: at("today").length,
+      hasAnyTask: anyTask,
+    };
+  },
+});
+
+/** Finished tasks, newest first. */
+export const completed = query({
+  args: {},
+  returns: v.array(taskDoc),
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const rows = await ctx.db
+      .query("tasks")
+      .withIndex("by_user_doneDay", (q) => q.eq("userId", userId).gte("doneDay", ""))
+      .order("desc")
+      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .take(100);
+    return rows.sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0));
   },
 });
 
