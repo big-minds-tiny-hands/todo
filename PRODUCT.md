@@ -34,7 +34,9 @@ Todo helps a person pick what matters today, finish it, and feel that the day wa
 ## Capabilities and Constraints
 
 - Shipped: All tasks with priorities, Today, focus sets, focus mode, time slots and meetings with a "Did you do this?" check, a calendar of planned days, checklists and notes in a task, daily goals, Wins with streaks and milestones, light and dark themes, sounds, haptics and confetti that each switch off, email and password sign-in, password reset, and Google and Microsoft sign-in once their credentials are set.
-- Terminology lives in `GLOSSARY.md`: Task, All tasks, Today, Focus set, Back to All tasks, Win, Daily goal, Time slot, Planned day, Calendar.
+- Shipped: Completed, a page of finished tasks grouped by day, where unchecking a task reopens it.
+- Shipped: a Planned section in All tasks that holds tasks put on a later day, grouped by day with their times.
+- Terminology lives in `GLOSSARY.md`: Task, All tasks, Completed, Today, Focus set, Back to All tasks, Win, Daily goal, Time slot, Planned day, Calendar.
 - Stack: Next.js with Bun, Convex, Better Auth, shadcn/ui on Base UI, Vercel.
 - Tasks are private to their owner. There is no sharing between users.
 - Sign-up is open to anyone with an email, Google or Microsoft account.
