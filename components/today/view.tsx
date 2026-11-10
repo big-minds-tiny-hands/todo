@@ -23,6 +23,11 @@ export function openToday(data: TodayData): Task[] {
   return [...data.focus, ...data.schedule, ...data.rest].filter((t) => !t.done);
 }
 
+/**
+ * Before the first focus set of the day, Today stays on the plan: tasks finished from it never jump the screen
+ * to "Next focus set". That view is only for after a finished set. With nothing open, the day is won at the
+ * daily target and back to the plan below it.
+ */
 export function deriveView(
   data: TodayData | undefined,
   goals: GoalRow[] | undefined,
@@ -38,10 +43,10 @@ export function deriveView(
   if (fresh && data.returnedCount > 0 && data.settings.newDayBannerSeen !== today) {
     return { kind: "newDay", data, goals, planned: open };
   }
-  if (fresh || (open.length === 0 && data.doneToday.length < data.settings.dailyTarget)) {
-    return { kind: "plan", data, goals, today: open };
+  if (open.length === 0) {
+    return data.doneToday.length < data.settings.dailyTarget ? { kind: "plan", data, goals, today: open } : { kind: "dayWon", data, goals };
   }
-  if (open.length === 0) return { kind: "dayWon", data, goals };
+  if (data.focusSet === 0) return { kind: "plan", data, goals, today: open };
   return { kind: "nextSet", data, open };
 }
 
