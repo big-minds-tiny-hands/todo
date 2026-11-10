@@ -6,6 +6,7 @@ import { Suspense, useState, type FormEvent } from "react";
 import { AlertIcon, Logo, SpinnerIcon } from "@/components/icons";
 import { SocialSignIn, socialErrorMessage } from "@/components/social-sign-in";
 import { authClient } from "@/lib/auth-client";
+import { unexpectedAuthError } from "@/lib/auth-error";
 
 export default function SignInPage() {
   return (
@@ -18,10 +19,10 @@ export default function SignInPage() {
 /** `noAccount` adds a way to sign-up: a wrong password and an email with no account look the same here. */
 type SignInError = { message: string; noAccount?: boolean };
 
-function signInError(status: number): SignInError {
-  if (status === 401 || status === 400) return { message: "That email and password don't match. Try again, or reset your password.", noAccount: true };
-  if (status === 429) return { message: "Too many tries. Wait a minute, then try again." };
-  return { message: "Could not reach Tiny ToDo. Check your connection and try again." };
+function signInError(error: { status: number; code?: string }): SignInError {
+  if (error.status === 401 || error.status === 400) return { message: "That email and password don't match. Try again, or reset your password.", noAccount: true };
+  if (error.status === 429) return { message: "Too many tries. Wait a minute, then try again." };
+  return { message: unexpectedAuthError("sign-in", error) };
 }
 
 function SignIn() {
@@ -45,7 +46,7 @@ function SignIn() {
     const { error } = await authClient.signIn.email({ email: email.trim(), password });
     if (error) {
       setBusy(false);
-      setError(signInError(error.status));
+      setError(signInError(error));
       return;
     }
     router.replace(next);
