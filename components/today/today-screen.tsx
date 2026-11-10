@@ -2,11 +2,10 @@
 
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
 import { AddTaskSheet } from "@/components/add-task-sheet";
-import { FocusDone } from "@/components/celebration";
+import { Celebration } from "@/components/celebration";
 import { LoadingBody } from "@/components/frames";
 import { CheckIcon, ChevronRight, CloseIcon, PlusIcon, RepeatIcon, SunIcon } from "@/components/icons";
 import { Avatar, Check, PriorityDot, Ring } from "@/components/ui-todo";
@@ -16,12 +15,12 @@ import { usePicks } from "./choose-focus";
 import { AddButton, FocusSection, GoalsSection, NewDayBanner, ScheduleSection, StreakPill, TodayHeader } from "./parts";
 import { TimeCheck, useDismissedSlots } from "./time-check";
 import { useCheck } from "./use-check";
+import { useMoment } from "./use-moment";
 import { byPriority, deriveView, pickMeta, slotToCheck, type GoalRow, type Task, type TodayData } from "./view";
 
 type When = "today" | "later";
 
 export function TodayScreen() {
-  const router = useRouter();
   const { today, yesterday, minutes } = useToday();
   const data = useQuery(api.tasks.today, { today, yesterday });
   const goals = useQuery(api.goals.forDay, { today, weekday: weekday(today) });
@@ -30,9 +29,9 @@ export function TodayScreen() {
   const updateSettings = useMutation(api.settings.update);
   const [planning, setPlanning] = useState(false);
   const [adding, setAdding] = useState<When | null>(null);
-  const [setDoneCount, setSetDoneCount] = useState<number | null>(null);
   const { dismissed, dismiss } = useDismissedSlots(today);
-  const { check, pending, justChecked } = useCheck(data, today, () => setSetDoneCount(null));
+  const { moment, after, clear, leaveTo } = useMoment(data, wins, today);
+  const { check, pending, justChecked } = useCheck(data, today, clear);
 
   const view = deriveView(data, goals, today, planning);
   const streak = wins?.streak ?? 0;
@@ -40,8 +39,7 @@ export function TodayScreen() {
   const add = () => setAdding("today");
 
   function onCheck(task: Task, done: boolean) {
-    const result = check(task, done);
-    if (result?.focusLeft === 0) setSetDoneCount(result.doneToday);
+    after(check(task, done));
   }
 
   function markBannerSeen() {
@@ -181,17 +179,17 @@ export function TodayScreen() {
       break;
   }
 
-  const slot = data && setDoneCount === null ? slotToCheck(data, minutes, dismissed) : undefined;
+  const slot = data && moment === null ? slotToCheck(data, minutes, dismissed) : undefined;
   return (
     <>
       {body}
-      {setDoneCount !== null && data && (
-        <FocusDone
-          doneToday={setDoneCount}
-          streak={streak}
+      {moment && data && (
+        <Celebration
+          moment={moment}
           confetti={data.settings.confetti}
-          onNext={() => router.push("/focus/choose")}
-          onClose={() => setSetDoneCount(null)}
+          onNext={() => leaveTo("/focus/choose")}
+          onWins={() => leaveTo("/wins")}
+          onClose={clear}
         />
       )}
       {slot && <TimeCheck key={slot._id} task={slot} today={today} onDone={(task) => onCheck(task, true)} onDismiss={dismiss} />}

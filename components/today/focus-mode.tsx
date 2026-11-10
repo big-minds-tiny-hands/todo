@@ -3,9 +3,9 @@
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { api } from "@/convex/_generated/api";
-import { FocusDone } from "@/components/celebration";
+import { Celebration } from "@/components/celebration";
 import { LoadingBody } from "@/components/frames";
 import { CheckIcon, CloseIcon } from "@/components/icons";
 import { Check } from "@/components/ui-todo";
@@ -14,6 +14,7 @@ import { lastDays, weekOf } from "@/lib/day";
 import { reward } from "@/lib/reward";
 import { StreakPill } from "./parts";
 import { useCheck } from "./use-check";
+import { useMoment } from "./use-moment";
 import type { Task, TodayData } from "./view";
 
 /** One focus task at a time, its checklist, and a big Done. */
@@ -22,32 +23,31 @@ export function FocusMode() {
   const { today, yesterday } = useToday();
   const data = useQuery(api.tasks.today, { today, yesterday });
   const wins = useQuery(api.stats.wins, { days: lastDays(today, 60), week: weekOf(today), monthPrefix: today.slice(0, 7) });
-  const [setDoneCount, setSetDoneCount] = useState<number | null>(null);
-  const { check } = useCheck(data, today, () => setSetDoneCount(null));
+  const { moment, after, clear, leaveTo } = useMoment(data, wins, today);
+  const { check } = useCheck(data, today, clear);
   const current = data?.focus.find((t) => !t.done);
   const streak = wins?.streak ?? 0;
-  const leave = data !== undefined && !current && setDoneCount === null;
+  const leave = data !== undefined && !current && moment === null;
 
   useEffect(() => {
     if (leave) router.replace("/");
   }, [leave, router]);
 
-  if (setDoneCount !== null && data) {
+  if (moment && data) {
     return (
-      <FocusDone
-        doneToday={setDoneCount}
-        streak={streak}
+      <Celebration
+        moment={moment}
         confetti={data.settings.confetti}
-        onNext={() => router.push("/focus/choose")}
-        onClose={() => router.push("/")}
+        onNext={() => leaveTo("/focus/choose")}
+        onWins={() => leaveTo("/wins")}
+        onClose={() => leaveTo("/")}
       />
     );
   }
   if (!data || !current) return <LoadingBody />;
 
   function done(task: Task) {
-    const result = check(task, true);
-    if (result?.focusLeft === 0) setSetDoneCount(result.doneToday);
+    after(check(task, true));
   }
 
   return <FocusTask data={data} task={current} streak={streak} onDone={done} />;

@@ -45,7 +45,7 @@ export function showToast(message: ReactNode, options: ToastOptions = {}) {
       <div className={`toast${options.lime ? " lime" : ""}`} role="status">
         <span style={{ display: "inline-flex", alignItems: "center", gap: 10, minWidth: 0, fontWeight: options.lime ? 600 : 500 }}>
           {options.icon}
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{message}</span>
+          <span className="toast-text">{message}</span>
         </span>
         {options.action && (
           <button

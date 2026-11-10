@@ -338,6 +338,34 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
 .ring.full b { color: var(--lime-tx); }
 .plus1 { position: absolute; font-family: var(--fd); font-weight: 700; font-size: 15px; color: var(--lime-ink); background: var(--lime); border-radius: 999px; padding: 3px 9px; box-shadow: 0 6px 18px rgba(200, 242, 90, 0.35); pointer-events: none; animation: plus-up 0.9s ease-out forwards; }
 @keyframes plus-up { 0% { opacity: 0; transform: translateY(6px) scale(0.8); } 20% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-22px); } }
+/* Ring: a +1 rises into the ring on every check; a single ping when the daily target fills it. */
+.ring .plus1 { top: 8px; right: calc(100% + 6px); z-index: 1; }
+.ring .ping { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; animation: ring-ping 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes ring-ping { from { box-shadow: 0 0 0 0 rgba(200, 242, 90, 0.6); } to { box-shadow: 0 0 0 16px rgba(200, 242, 90, 0); } }
+
+/* The moment screen: Focus set done, or Day won with the streak rolling up. */
+.moment-medal { width: 132px; height: 132px; border-radius: 50%; background: var(--lime); color: var(--lime-ink); display: grid; place-items: center; box-shadow: 0 0 0 14px rgba(200, 242, 90, 0.12), 0 0 0 30px rgba(200, 242, 90, 0.05); animation: medal-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes medal-in { from { transform: scale(0.8); opacity: 0; } }
+.moment-medal.day { background: var(--amber); color: #1A1204; box-shadow: 0 0 0 14px rgba(255, 176, 32, 0.14), 0 0 0 30px rgba(255, 176, 32, 0.06); }
+.moment-medal.day .i { width: 60px; height: 60px; stroke-width: 2.2; }
+.moment-streak { margin: -6px 0 0; font-family: var(--fd); font-size: 22px; font-weight: 600; color: var(--amber-tx); display: inline-flex; align-items: baseline; }
+.tick { display: inline-grid; overflow: hidden; height: 1.2em; line-height: 1.2em; vertical-align: bottom; }
+.tick > span { grid-area: 1 / 1; text-align: right; }
+.tick .out { animation: tick-out 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both; }
+.tick .in { animation: tick-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both; }
+@keyframes tick-out { to { transform: translateY(-100%); opacity: 0; } }
+@keyframes tick-in { from { transform: translateY(100%); opacity: 0; } }
+.moment-milestone { margin: 4px 0 0; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--s1); border: 1px solid var(--amber-line); color: var(--tx); font-size: 15px; font-weight: 500; animation: fade-in 0.4s ease-out 0.9s both; }
+.moment-milestone .i { width: 18px; height: 18px; color: var(--amber-tx); }
+
+/* Wins: a milestone earned since the last visit is marked New once. */
+.medal.fresh { animation: medal-shine 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+@keyframes medal-shine { 0% { transform: scale(0.85); box-shadow: 0 0 0 0 var(--lime-soft); } 55% { transform: scale(1.06); box-shadow: 0 0 0 10px transparent; } 100% { transform: scale(1); } }
+.new-pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--lime); color: var(--lime-ink); margin-left: 8px; vertical-align: 2px; }
+
+/* Toast copy wraps to two lines rather than cutting off the cheer or a task title. */
+.toast-text { min-width: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; line-height: 1.3; }
+
 .tile { background: var(--s1); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
 .tile .big { font-family: var(--fd); font-size: 30px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .badge-m { display: flex; align-items: center; gap: 14px; padding: 12px 14px; min-height: 68px; }
@@ -354,7 +382,13 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  /* Feedback that confirms an action stays, without movement: the +1 and the streak gain fade instead. */
+  .ring .plus1 { animation: plus-fade 0.9s ease-out forwards !important; }
+  .tick .out { animation: fade-out 0.3s ease-out 0.4s both !important; }
+  .tick .in { animation: fade-in 0.3s ease-out 0.4s both !important; }
 }
+@keyframes plus-fade { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
 
 /* Multi-column pages: one column on phone and iPad portrait */
 .cols { display: flex; flex-direction: column; gap: 20px; }

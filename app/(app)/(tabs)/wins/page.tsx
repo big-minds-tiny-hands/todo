@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useEffect, useState } from "react";
 import type { FunctionReturnType } from "convex/server";
 import { BackLink } from "@/components/settings/controls";
 import { WEEK } from "@/components/settings/goal-days";
@@ -77,8 +78,33 @@ export default function WinsPage() {
   );
 }
 
+const SEEN_KEY = "todo:milestones-seen";
+
+/** Milestones earned since the last visit on this device are marked New once, then remembered as seen. */
+function useFreshMilestones(earnedIds: string[]) {
+  const [seen] = useState<ReadonlySet<string> | null>(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(SEEN_KEY) ?? "null");
+      return Array.isArray(saved) ? new Set(saved.filter((id) => typeof id === "string")) : null;
+    } catch {
+      return new Set(earnedIds);
+    }
+  });
+  const key = earnedIds.join(",");
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SEEN_KEY, JSON.stringify(key ? key.split(",") : []));
+    } catch {
+      // Storage can be blocked. Nothing is marked New then.
+    }
+  }, [key]);
+  // A first visit marks nothing New: earlier milestones are not news.
+  return (id: string) => seen !== null && !seen.has(id);
+}
+
 function WinsBody({ wins, today }: { wins: Wins; today: string }) {
   const miles = milestones(wins, today);
+  const isFresh = useFreshMilestones(miles.filter((m) => m.earned).map((m) => m.id));
   const peak = Math.max(6, ...wins.week.map((d) => d.count));
   const nextDay = wins.doneToday >= wins.target ? "tomorrow" : "today";
   const tiles = [
@@ -162,11 +188,14 @@ function WinsBody({ wins, today }: { wins: Wins; today: string }) {
         <div className="card">
           {miles.map((m) => (
             <div key={m.id} className="badge-m">
-              <span className={`medal${m.earned ? (m.kind === "amber" ? " amber" : "") : " locked"}`} aria-hidden="true">
+              <span className={`medal${m.earned ? (m.kind === "amber" ? " amber" : "") : " locked"}${m.earned && isFresh(m.id) ? " fresh" : ""}`} aria-hidden="true">
                 {m.earned ? <CheckIcon /> : <LockIcon />}
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 16, fontWeight: 500 }}>{m.title}</div>
+                <div style={{ fontSize: 16, fontWeight: 500 }}>
+                  {m.title}
+                  {m.earned && isFresh(m.id) && <span className="new-pill">New</span>}
+                </div>
                 {m.earned ? (
                   <div className="small muted" style={{ marginTop: 2 }}>
                     {m.when}

@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
-import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { Pwa } from "@/components/pwa";
 import { ThemeColor } from "@/components/theme-color";
+import { ToasterHost } from "@/components/toaster-host";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -33,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <Providers>
           {children}
-          <Toaster position="bottom-center" offset={24} mobileOffset={{ bottom: 96 }} toastOptions={{ unstyled: true }} />
+          <ToasterHost />
           <Pwa />
           <ThemeColor />
         </Providers>

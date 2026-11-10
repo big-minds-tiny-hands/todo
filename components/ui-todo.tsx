@@ -45,11 +45,31 @@ export function Check({
 }
 
 /** Daily ring: done today against the daily target. */
+/** Counts the ring's gains while it stays on screen, so each one can play once. The first render plays nothing. */
+function useRingGains(done: number, target: number) {
+  const [seen, setSeen] = useState(done);
+  const [plus, setPlus] = useState(0);
+  const [ping, setPing] = useState(0);
+  if (done !== seen) {
+    if (done > seen) setPlus((n) => n + 1);
+    if (seen < target && done >= target) setPing((n) => n + 1);
+    setSeen(done);
+  }
+  return { plus, ping };
+}
+
 export function Ring({ done, target, href }: { done: number; target: number; href?: string }) {
   const circumference = 113;
   const offset = circumference * (1 - Math.min(1, target ? done / target : 0));
+  const { plus, ping } = useRingGains(done, target);
   const content = (
     <>
+      {ping > 0 && <span key={`ping-${ping}`} className="ping" aria-hidden="true" />}
+      {plus > 0 && (
+        <span key={`plus-${plus}`} className="plus1" aria-hidden="true">
+          +1
+        </span>
+      )}
       <svg viewBox="0 0 44 44" aria-hidden="true">
         <circle className="track" cx="22" cy="22" r="18" />
         <circle className="val" cx="22" cy="22" r="18" style={{ strokeDasharray: circumference, strokeDashoffset: offset }} />

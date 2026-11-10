@@ -5,10 +5,10 @@ import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { ClockIcon, ExpandIcon, FlameIcon, PlusIcon, UndoIcon } from "@/components/icons";
+import { CheckIcon, ClockIcon, ExpandIcon, FlameIcon, PlusIcon, UndoIcon } from "@/components/icons";
 import { Check } from "@/components/ui-todo";
 import { clockLabel, longDate } from "@/lib/day";
-import { reward, type RewardPrefs } from "@/lib/reward";
+import { reward, showToast, type RewardPrefs } from "@/lib/reward";
 import { checklistLabel, clockOf, isNow, slotMeta, type GoalRow, type Task } from "./view";
 
 export function TodayHeader({ today, title = "Today", children }: { today: string; title?: string; children: ReactNode }) {
@@ -149,7 +149,15 @@ export function GoalsSection({ goals, today, prefs }: { goals: GoalRow[]; today:
   const met = goals.filter((r) => r.count >= r.goal.target).length;
 
   function step({ goal, count }: GoalRow, delta: 1 | -1) {
-    if (delta === 1 && count + 1 === goal.target) reward(prefs);
+    if (delta === 1 && count + 1 === goal.target) {
+      const allMet = met + 1 === goals.length;
+      reward(prefs, allMet);
+      showToast(allMet ? "Every daily goal met today." : `Goal met: ${goal.title}`, {
+        lime: true,
+        icon: <CheckIcon size={20} style={{ strokeWidth: 2.6 }} />,
+        duration: 3000,
+      });
+    }
     void bump({ id: goal._id, today, delta });
   }
 

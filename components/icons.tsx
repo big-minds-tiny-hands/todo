@@ -68,6 +68,7 @@ export const OfflineIcon = (p: IconProps) => <Svg {...p}><path d="M2 8.5a15 15 0
 export const PhoneIcon = (p: IconProps) => <Svg {...p}><rect x="6" y="2.5" width="12" height="19" rx="3" /><path d="M11 18.5h2" /></Svg>;
 export const MonitorIcon = (p: IconProps) => <Svg {...p}><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></Svg>;
 export const SpinnerIcon = (p: IconProps) => <Svg {...p} className="animate-spin"><path d="M12 3a9 9 0 1 0 9 9" /></Svg>;
+export const TrophyIcon = (p: IconProps) => <Svg {...p}><path d="M8 4h8v5a4 4 0 0 1-8 0V4zM8 6H5v1.5A3.5 3.5 0 0 0 8.5 11M16 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 13v4M8.5 20h7M10 17h4" /></Svg>;
 export const MoonIcon = (p: IconProps) => <Svg {...p}><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" /></Svg>;
 
 export function Logo({ size = 48 }: { size?: number }) {
