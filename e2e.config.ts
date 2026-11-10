@@ -21,7 +21,7 @@ export default {
   workers: 1,
   targets: [
     {
-      // Melina uses Todo on her phone first, so tests run at a phone viewport.
+      // Todo is used on a phone first, so tests run at a phone viewport.
       engine: web({ viewport: { width: 390, height: 844 } }),
       app: {
         url: 'http://localhost:3001',

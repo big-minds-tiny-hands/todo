@@ -1,6 +1,6 @@
 # Todo
 
-A to-do app for Melina at Big Minds Tiny Hands. She dumps every task into All tasks and picks today's work by priority. She commits to a small focus set and checks it off. Daily goals and time slots sit on the same screen. Dark theme, phone and computer.
+A to-do app that helps you finish what matters today. Dump every task into All tasks, pick today's work by priority, commit to a small focus set, and check it off. Daily goals and time slots sit on the same screen. Dark theme, phone and computer.
 
 - Code: [big-minds-tiny-hands/todo](https://github.com/big-minds-tiny-hands/todo) (private)
 - Plan and status: [Linear project "Todo"](https://linear.app/big-minds-tiny-hands/project/todo-892e0b5657a8) (OPS-28 to OPS-47)
@@ -59,3 +59,7 @@ Convex env vars (set with `bunx convex env set NAME value`, add `--prod` for pro
 Show the buttons by setting `NEXT_PUBLIC_AUTH_PROVIDERS` (for example `google,microsoft`) in `.env.local` and in the Vercel env.
 
 Auth hardening: rate limits stored in the component database (sign-in 5 a minute, password reset 3 per 5 minutes), encrypted OAuth tokens, 60-day sessions renewed daily, and audit lines in the Convex logs for each new session and linked account. Password reset links go to the Convex logs until an email provider is added (OPS-46).
+
+## License
+
+MIT. See [LICENSE](LICENSE). Report security issues privately as described in [SECURITY.md](SECURITY.md).
