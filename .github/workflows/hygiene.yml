@@ -1,0 +1,25 @@
+# PR hygiene: no-emoji over the PR title, body, and changed files, plus gitleaks
+# over the PR title, body, and full history. One shared job from the org
+# standard (big-minds-tiny-hands/.github CI-STANDARD.md) instead of a job per
+# guard. The conventional PR title is a Mergify merge protection (.mergify.yml).
+name: PR hygiene
+
+on:
+  pull_request:
+    # edited: the queue squashes the PR title and body onto main, so a changed
+    # body is scanned again before it merges.
+    types: [opened, synchronize, reopened, edited]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    name: PR hygiene
+    uses: big-minds-tiny-hands/.github/.github/workflows/pr-hygiene.yml@main
+    with:
+      secret-scan: full
