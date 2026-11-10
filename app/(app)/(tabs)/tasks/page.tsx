@@ -12,7 +12,7 @@ import { TaskActionsMenu, useAddToToday, useDeleteTask } from "@/components/task
 import { TimeSheet } from "@/components/tasks/time-sheet";
 import { PriorityGroups } from "@/components/tasks/priority-groups";
 import { creationDay, dayLabel, daysBetween, slotLabel, type Task } from "@/components/tasks/when";
-import { Avatar, PRIORITY_LABEL } from "@/components/ui-todo";
+import { Avatar, PRIORITY_LABEL, RowAction } from "@/components/ui-todo";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useToday } from "@/hooks/use-today";
@@ -286,9 +286,10 @@ function TaskRow({
           <div className="tt">{task.title}</div>
           <div className="m">{meta}</div>
         </Link>
-        <button type="button" className="iconbtn ghost" aria-label={`Add ${task.title} to Today`} onClick={() => void addToToday(task, today)}>
-          <SunIcon />
-        </button>
+        <RowAction name={`Add ${task.title} to Today`} onClick={() => void addToToday(task, today)}>
+          <PlusIcon />
+          Today
+        </RowAction>
       </div>
     </SwipeRow>
   );

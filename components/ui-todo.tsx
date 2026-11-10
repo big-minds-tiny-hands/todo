@@ -168,6 +168,25 @@ export function TabBar({ allTasksCount }: { allTasksCount?: number }) {
   );
 }
 
+/** The one small worded button every row action uses. `name` is the accessible name when it says more than the words. */
+export function RowAction({
+  children,
+  name,
+  onClick,
+  disabled,
+}: {
+  children: ReactNode;
+  name?: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button type="button" className="btn sec act" aria-label={name} disabled={disabled} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+
 export function PriorityDot({ priority }: { priority: "high" | "normal" | "low" }) {
   return <span className={`pri ${priority}`} aria-hidden="true" />;
 }

@@ -77,10 +77,11 @@ export function FocusSection({ focus, streak, ...props }: { focus: Task[]; strea
             {done} of {focus.length} done
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <StreakPill streak={streak} />
-          <Link className="iconbtn ghost" href="/focus" aria-label="Open focus mode" style={{ margin: "-8px -8px -8px 0" }}>
+          <Link className="btn sec act" href="/focus" aria-label="Open focus mode">
             <ExpandIcon />
+            Focus mode
           </Link>
         </div>
       </div>

@@ -10,7 +10,7 @@ import { LoadingBody } from "@/components/frames";
 import { CheckIcon, ListIcon, PlusIcon, RepeatIcon, SunIcon } from "@/components/icons";
 import { PriorityGroups } from "@/components/tasks/priority-groups";
 import { SwipeRow } from "@/components/swipe-row";
-import { Avatar, Ring } from "@/components/ui-todo";
+import { Avatar, Ring, RowAction } from "@/components/ui-todo";
 import { useToday } from "@/hooks/use-today";
 import { lastDays, weekday, weekOf } from "@/lib/day";
 import { usePicks } from "./choose-focus";
@@ -247,14 +247,9 @@ function PlanBody({
                   left={{ label: "All tasks", icon: <ListIcon />, tone: "neutral", leaves: true, run: () => void removeFromToday({ id: task._id, today }) }}
                 >
                   <OpenTaskRow task={task} meta={pickMeta(task, today, { priority: false })} onCheck={onCheck}>
-                    <button
-                      type="button"
-                      className="iconbtn ghost"
-                      aria-label={`Send ${task.title} back to All tasks`}
-                      onClick={() => void removeFromToday({ id: task._id, today })}
-                    >
-                      <ListIcon />
-                    </button>
+                    <RowAction name={`Send ${task.title} back to All tasks`} onClick={() => void removeFromToday({ id: task._id, today })}>
+                      Not today
+                    </RowAction>
                   </OpenTaskRow>
                 </SwipeRow>
               )}
@@ -280,9 +275,10 @@ function PlanBody({
                         <div className="tt">{task.title}</div>
                         {meta && <div className="m">{meta}</div>}
                       </Link>
-                      <button type="button" className="iconbtn" aria-label={`Add ${task.title} to Today`} onClick={() => void addToToday({ id: task._id, today })}>
+                      <RowAction name={`Add ${task.title} to Today`} onClick={() => void addToToday({ id: task._id, today })}>
                         <PlusIcon />
-                      </button>
+                        Today
+                      </RowAction>
                     </div>
                   </SwipeRow>
                 );
@@ -354,15 +350,9 @@ function NextSetBody({ data, open, today, onCheck }: { data: TodayData; open: Ta
           <PriorityGroups tasks={left} heading="h3">
             {(task) => (
               <OpenTaskRow task={task} meta={pickMeta(task, today, { priority: false })} onCheck={onCheck}>
-                <button
-                  type="button"
-                  className="mark"
-                  aria-label={`Add ${task.title} to the next focus set`}
-                  disabled={picks.length >= limit}
-                  onClick={() => toggle(task._id)}
-                >
-                  <span />
-                </button>
+                <RowAction name={`Add ${task.title} to the next focus set`} disabled={picks.length >= limit} onClick={() => toggle(task._id)}>
+                  Pick
+                </RowAction>
               </OpenTaskRow>
             )}
           </PriorityGroups>

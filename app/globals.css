@@ -273,6 +273,11 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 /* Header add button: a 44px target that fits beside the ring and the avatar on a 390px phone. */
 .btn.add { height: 44px; border-radius: 14px; padding: 0 14px 0 10px; font-size: 15px; gap: 6px; }
 .btn.add .i { width: 20px; height: 20px; }
+/* Row action: 36px to sit in a 56px row, with the hit area grown to 44px. It never wraps; the title truncates instead. */
+.btn.act { position: relative; flex: none; height: 36px; border-radius: 12px; padding: 0 12px; font-size: 14px; gap: 4px; }
+.btn.act::after { content: ""; position: absolute; inset: -4px; }
+.btn.act .i { width: 16px; height: 16px; stroke-width: 2.4; }
+.btn.act:has(.i) { padding-left: 9px; }
 .btn[disabled] { opacity: 0.5; cursor: default; transform: none; }
 .iconbtn { width: 44px; height: 44px; border-radius: 14px; background: var(--s2); border: 1px solid var(--line); display: grid; place-items: center; color: var(--tx); padding: 0; flex: none; text-decoration: none; }
 .iconbtn.ghost { background: none; border-color: transparent; color: var(--tx2); }
