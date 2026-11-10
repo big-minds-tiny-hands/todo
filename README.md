@@ -23,3 +23,11 @@ bun run dev -- -p 3012
 ```
 
 Convex dev dashboard: https://dashboard.convex.dev/t/bmth/todo/artful-mastiff-968
+
+## Telemetry
+
+Sentry reports errors and PostHog reports product usage. Both are off in `next dev` and turn on in a production build once their variable is set. See `.env.example`.
+
+- Sentry: set `NEXT_PUBLIC_SENTRY_DSN` to the `todo` project DSN in `.env.example`. `SENTRY_AUTH_TOKEN` at build time uploads source maps. Browser events go through `/monitoring`.
+- PostHog: set `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN`. Events go to the shared US project 548413 through `/ingest`, each tagged `app: "todo"`.
+- Privacy: task titles can name children. PostHog masks all page text, element attributes and inputs in autocapture and session replay. Sentry sends no default PII and records no replays.
