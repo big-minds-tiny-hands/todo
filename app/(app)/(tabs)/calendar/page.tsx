@@ -11,8 +11,7 @@ import { PRIORITY_LABEL } from "@/components/ui-todo";
 import { api } from "@/convex/_generated/api";
 import { useToday } from "@/hooks/use-today";
 import { clockLabel, fromDay, lengthLabel, shortDate } from "@/lib/day";
-
-const PRIORITY_RANK = { high: 0, normal: 1, low: 2 } as const;
+import { byPriority } from "@/lib/placement";
 
 /** Month shown and day picked. Null until the user moves, so both follow today across midnight. */
 type View = { month: string; selected: string };
@@ -32,9 +31,7 @@ export default function CalendarPage() {
   const cells = monthCells({ month, today, selected, busyDays: new Set(planned?.map(calendarDay)) });
   const dayTasks = planned?.filter((t) => calendarDay(t) === selected);
   const timed = dayTasks?.filter((t) => t.startTime) ?? [];
-  const untimed = (dayTasks?.filter((t) => !t.startTime) ?? []).sort(
-    (a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order,
-  );
+  const untimed = (dayTasks?.filter((t) => !t.startTime) ?? []).sort(byPriority);
   const canAdd = selected >= today;
   const date = fromDay(month);
 
