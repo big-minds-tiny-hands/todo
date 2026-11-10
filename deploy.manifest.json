@@ -1,0 +1,45 @@
+{
+  "project": "todo",
+  "prodDomain": "todo-kappa-eight-48.vercel.app",
+  "vercel": {
+    "projectId": "prj_1LtQE9LpJjW5v1JkKuaP9KwoSPLt",
+    "orgId": "team_z1iL7ZH5ZLoqZsCBjJGMF2H6",
+    "orgSlug": "big-minds-tiny-hands",
+    "intendedProjectName": "todo",
+    "buildCommandSource": "vercel.json",
+    "buildCommand": "bun run build:vercel",
+    "gitIntegration": "Each merge to main starts a production build. The Production env holds CONVEX_DEPLOY_KEY, so that build runs convex deploy first and then the Next build; a failed Next build stops the Convex push. Preview builds have no key, build only, and read the Convex dev deployment."
+  },
+  "postDeploy": {
+    "criticalRoutes": [
+      { "path": "/", "expect": [200] },
+      { "path": "/ingest/flags/?v=2", "expect": [200] }
+    ],
+    "requiredEnv": [
+      "CONVEX_DEPLOY_KEY",
+      "NEXT_PUBLIC_SENTRY_DSN",
+      "NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN"
+    ]
+  },
+  "backend": {
+    "kind": "convex",
+    "prodDeployment": "giddy-eagle-641",
+    "prodDeploy": "runs inside build:vercel on Vercel Production, only when CONVEX_DEPLOY_KEY is set",
+    "deployKeyEnv": "CONVEX_DEPLOY_KEY",
+    "requiredConvexEnv": [],
+    "verify": "bunx convex function-spec --prod"
+  },
+  "gate": {
+    "command": "CI: Quality gate and PR hygiene / checks, then the Mergify queue"
+  },
+  "footguns": [
+    {
+      "id": "F2-cross-project",
+      "rule": "Never deploy with a bare vercel CLI call. The one door is ~/bin/vercel-deploy, which checks the linked project against this manifest."
+    },
+    {
+      "id": "preview-key",
+      "rule": "Keep CONVEX_DEPLOY_KEY in the Production env only. In Preview it would let every preview build deploy Convex production."
+    }
+  ]
+}
