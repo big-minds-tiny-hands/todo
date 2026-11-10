@@ -297,7 +297,7 @@ function PlanBody({
         {goals}
       </main>
       <div className="cta">
-        {onToday.length > 0 ? (
+        {onToday.length > 0 || pool.length > 0 ? (
           <Link className="btn pri full" href="/focus/choose">
             Choose a focus set
           </Link>
