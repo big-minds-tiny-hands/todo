@@ -10,7 +10,9 @@ import { LoadingBody } from "@/components/frames";
 import { CheckIcon, ListIcon, PlusIcon, RepeatIcon, SunIcon } from "@/components/icons";
 import { PriorityGroups } from "@/components/tasks/priority-groups";
 import { SwipeRow } from "@/components/swipe-row";
-import { Avatar, Ring, RowAction } from "@/components/ui-todo";
+import { Avatar, Ring, RowAction, SendToToday } from "@/components/ui-todo";
+import { useAddToToday } from "@/components/tasks/task-actions-menu";
+import { useLinger } from "@/components/tasks/use-linger";
 import { useToday } from "@/hooks/use-today";
 import { lastDays, weekday, weekOf } from "@/lib/day";
 import { usePicks } from "./choose-focus";
@@ -230,9 +232,10 @@ function PlanBody({
   goals: ReactNode;
 }) {
   const all = useQuery(api.tasks.all, { today });
-  const addToToday = useMutation(api.tasks.addToToday);
+  const addToToday = useAddToToday();
   const removeFromToday = useMutation(api.tasks.removeFromToday);
-  const pool = all?.pool ?? [];
+  const { hold, withHeld } = useLinger<Task>();
+  const { rows: pool, isHeld } = withHeld(all?.pool ?? [], "pool", byPriority);
   return (
     <>
       <main className="scroll">
@@ -262,24 +265,27 @@ function PlanBody({
           <section className="stack">
             <h2 className="stitle">
               <span>From All tasks</span>
-              <span className="num">{pool.length}</span>
+              <span className="num">{all?.pool.length}</span>
             </h2>
             <PriorityGroups tasks={pool} heading="h3">
               {(task) => {
                 const meta = pickMeta(task, today, { priority: false });
+                const sent = isHeld(task._id);
                 return (
-                  <SwipeRow
-                    right={{ label: "Today", icon: <SunIcon />, tone: "lime", leaves: true, run: () => void addToToday({ id: task._id, today }) }}
-                  >
+                  <SwipeRow right={sent ? undefined : { label: "Today", icon: <SunIcon />, tone: "lime", leaves: true, run: () => void addToToday(task, today) }}>
                     <div className="task">
                       <Link className="t" href={`/task/${task._id}`} style={{ textDecoration: "none" }}>
                         <div className="tt">{task.title}</div>
                         {meta && <div className="m">{meta}</div>}
                       </Link>
-                      <RowAction name={`Add ${task.title} to Today`} onClick={() => void addToToday({ id: task._id, today })}>
-                        <PlusIcon />
-                        Today
-                      </RowAction>
+                      <SendToToday
+                        title={task.title}
+                        sent={sent}
+                        onSend={() => {
+                          hold(task, "pool");
+                          void addToToday(task, today);
+                        }}
+                      />
                     </div>
                   </SwipeRow>
                 );

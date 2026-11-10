@@ -38,11 +38,18 @@ export function useDeleteTask() {
   };
 }
 
+/** Puts a task on Today with an Undo toast. Undo waits for the add to land, then takes the task off Today. */
 export function useAddToToday() {
   const addToToday = useMutation(api.tasks.addToToday).withOptimisticUpdate((store, { id }) => leaveAllTasks(store, id, true));
+  const removeFromToday = useMutation(api.tasks.removeFromToday);
   return (task: Task, today: string) => {
-    showToast("Added to Today", { icon: <CheckIcon size={18} style={{ strokeWidth: 2.6 }} />, duration: 2000 });
-    return addToToday({ id: task._id, today });
+    const adding = addToToday({ id: task._id, today });
+    showToast("Added to Today", {
+      icon: <CheckIcon size={18} style={{ strokeWidth: 2.6 }} />,
+      duration: 4000,
+      action: { label: "Undo", onClick: () => void adding.then(() => removeFromToday({ id: task._id, today })) },
+    });
+    return adding;
   };
 }
 

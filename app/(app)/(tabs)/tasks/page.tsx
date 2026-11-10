@@ -11,13 +11,15 @@ import { DaySheet } from "@/components/tasks/day-sheet";
 import { TaskActionsMenu, useAddToToday, useDeleteTask } from "@/components/tasks/task-actions-menu";
 import { TimeSheet } from "@/components/tasks/time-sheet";
 import { PriorityGroups } from "@/components/tasks/priority-groups";
+import { useLinger } from "@/components/tasks/use-linger";
 import { creationDay, dayLabel, daysBetween, slotLabel, type Task } from "@/components/tasks/when";
-import { Avatar, PRIORITY_LABEL, RowAction } from "@/components/ui-todo";
+import { Avatar, PRIORITY_LABEL, SendToToday } from "@/components/ui-todo";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useToday } from "@/hooks/use-today";
 import { authClient } from "@/lib/auth-client";
 import { clockLabel, shortDate } from "@/lib/day";
+import { byPlannedDay, byPriority } from "@/lib/placement";
 
 /** Which task's actions are open, and which surface: the menu or one of its sheets. */
 type Active = { id: Id<"tasks">; anchor: Element; panel: "menu" | "day" | "time" };
@@ -69,15 +71,18 @@ export default function AllTasksPage() {
   const { data: session } = authClient.useSession();
   const [adding, setAdding] = useState(false);
   const [active, setActive] = useState<Active | null>(null);
+  const { hold, withHeld } = useLinger<Task>();
   const name = session?.user.name;
   // Keyed so the open sheet survives the switch between the empty and the list layout, keeping what was typed.
   const addSheet = <AddTaskSheet key="add-task" open={adding} onOpenChange={setAdding} today={today} />;
 
   if (data === undefined) return <AllTasksLoading name={name} />;
 
+  const pool = withHeld(data.pool, "pool", byPriority);
+  const planned = withHeld(data.planned, "planned", byPlannedDay);
   const listed = data.pool.length + data.planned.length;
 
-  if (listed === 0) {
+  if (pool.rows.length + planned.rows.length === 0) {
     return (
       <>
         <header className="head">
@@ -129,11 +134,13 @@ export default function AllTasksPage() {
   const activeTask = active ? [...data.pool, ...data.planned].find((t) => t._id === active.id) : undefined;
   // Move up and down reorder within a priority group of the pool. Planned tasks sort by day and time instead.
   const activeGroup = activeTask && data.pool.includes(activeTask) ? data.pool.filter((t) => t.priority === activeTask.priority) : [];
-  const row = (task: Task, meta: string) => (
+  const row = (task: Task, meta: string, from: "pool" | "planned") => (
     <TaskRow
       task={task}
       today={today}
       meta={meta}
+      sent={(from === "pool" ? pool : planned).isHeld(task._id)}
+      onSent={() => hold(task, from)}
       highlighted={active?.id === task._id && active.panel === "menu"}
       onActions={(anchor) => setActive({ id: task._id, anchor, panel: "menu" })}
     />
@@ -174,15 +181,15 @@ export default function AllTasksPage() {
           <CompletedRow count={completed?.length} />
         </div>
 
-        <PriorityGroups tasks={data.pool}>{(task) => row(task, metaFor(task, today, yesterday))}</PriorityGroups>
+        <PriorityGroups tasks={pool.rows}>{(task) => row(task, metaFor(task, today, yesterday), "pool")}</PriorityGroups>
 
-        {data.planned.length > 0 && (
+        {planned.rows.length > 0 && (
           <section className="stack">
             <h2 className="stitle">
               <span>Planned</span>
               <span className="num">{data.planned.length}</span>
             </h2>
-            {byDay(data.planned).map(([day, tasks]) => (
+            {byDay(planned.rows).map(([day, tasks]) => (
               <section key={day}>
                 <h3 className="label">
                   <span>{dayLabel(day, today)}</span>
@@ -190,7 +197,7 @@ export default function AllTasksPage() {
                 </h3>
                 <div className="card">
                   {tasks.map((task) => (
-                    <Fragment key={task._id}>{row(task, [PRIORITY_LABEL[task.priority], slotLabel(task)].filter(Boolean).join(" · "))}</Fragment>
+                    <Fragment key={task._id}>{row(task, [PRIORITY_LABEL[task.priority], slotLabel(task)].filter(Boolean).join(" · "), "planned")}</Fragment>
                   ))}
                 </div>
               </section>
@@ -227,17 +234,24 @@ const LONG_PRESS_MS = 500;
 /** A finger that moves this far is swiping or scrolling, not pressing. */
 const PRESS_SLOP_PX = 8;
 
-/** Tap opens the task. Long-press, right-click, or the context-menu key opens its actions. */
+/**
+ * Tap opens the task. Long-press, right-click, or the context-menu key opens its actions. A row `sent` to Today by
+ * its button stays for a moment as "On Today" before it leaves.
+ */
 function TaskRow({
   task,
   today,
   meta,
+  sent,
+  onSent,
   highlighted,
   onActions,
 }: {
   task: Task;
   today: string;
   meta: string;
+  sent: boolean;
+  onSent: () => void;
   highlighted: boolean;
   onActions: (anchor: Element) => void;
 }) {
@@ -248,8 +262,8 @@ function TaskRow({
 
   return (
     <SwipeRow
-      right={{ label: "Today", icon: <SunIcon />, tone: "lime", leaves: true, run: () => void addToToday(task, today) }}
-      left={{ label: "Delete", icon: <TrashIcon />, tone: "red", leaves: true, run: () => void deleteTask(task) }}
+      right={sent ? undefined : { label: "Today", icon: <SunIcon />, tone: "lime", leaves: true, run: () => void addToToday(task, today) }}
+      left={sent ? undefined : { label: "Delete", icon: <TrashIcon />, tone: "red", leaves: true, run: () => void deleteTask(task) }}
     >
       <div
         className={`task${highlighted ? " sel" : ""}`}
@@ -286,10 +300,14 @@ function TaskRow({
           <div className="tt">{task.title}</div>
           <div className="m">{meta}</div>
         </Link>
-        <RowAction name={`Add ${task.title} to Today`} onClick={() => void addToToday(task, today)}>
-          <PlusIcon />
-          Today
-        </RowAction>
+        <SendToToday
+          title={task.title}
+          sent={sent}
+          onSend={() => {
+            onSent();
+            void addToToday(task, today);
+          }}
+        />
       </div>
     </SwipeRow>
   );

@@ -4,7 +4,7 @@ import { Drawer } from "@base-ui/react/drawer";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { CalendarIcon, CheckIcon, ListIcon, SunIcon } from "@/components/icons";
+import { CalendarIcon, CheckIcon, ListIcon, PlusIcon, SunIcon } from "@/components/icons";
 
 /** Round check from the design: 44px target, 28px ring (36px when large). */
 export function Check({
@@ -183,6 +183,21 @@ export function RowAction({
     <button type="button" className="btn sec act" aria-label={name} disabled={disabled} onClick={onClick}>
       {children}
     </button>
+  );
+}
+
+/** "+ Today" on a row, and a disabled "On Today" for the moment after, while the sent row stays in place. */
+export function SendToToday({ title, sent, onSend }: { title: string; sent: boolean; onSend: () => void }) {
+  return sent ? (
+    <RowAction name={`On Today: ${title}`} disabled onClick={() => {}}>
+      <CheckIcon />
+      On Today
+    </RowAction>
+  ) : (
+    <RowAction name={`Add ${title} to Today`} onClick={onSend}>
+      <PlusIcon />
+      Today
+    </RowAction>
   );
 }
 
