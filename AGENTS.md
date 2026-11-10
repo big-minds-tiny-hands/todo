@@ -18,6 +18,10 @@ Issues live in Linear (OPS team, Todo project). They do not sync to GitHub. Use 
 
 OPS has no Execution Readiness labels yet, so the five triage roles map to issue states. See `docs/agents/triage-labels.md`.
 
+### End-to-end tests and verification
+
+End-to-end tests use e2e; read .agents/skills/e2e/SKILL.md before writing or running one. To launch, drive and prove a change in the running app, read .agents/skills/verify-todo/SKILL.md.
+
 ### Domain docs
 
 Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
