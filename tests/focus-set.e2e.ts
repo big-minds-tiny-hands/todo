@@ -27,5 +27,5 @@ test('a task added to Today becomes the focus set and finishing it completes the
 
   await check.tap();
   await expect(screen.getByRole('heading', 'Focus set done')).toBeVisible();
-  await expect(screen.getByText('1 done today')).toBeVisible();
+  await expect(screen.getByRole('dialog', 'Focus set done').getByText('1 done today')).toBeVisible();
 });
