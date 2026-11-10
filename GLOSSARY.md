@@ -41,7 +41,7 @@ A day on which the user finishes at least the daily target (default 3 tasks). Wi
 _Avoid_: Points, score, XP
 
 **Daily goal**:
-A target the user must meet on each of its days, such as "Get 2 tours". It is separate from tasks and resets each day.
+Something the user does once on each of its days and checks off, such as "Get 2 tours". It has no count: the name says what done means. It is separate from tasks and comes back each day.
 _Avoid_: Habit, recurring task, repeat, routine
 
 **Time slot**:

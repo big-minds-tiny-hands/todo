@@ -1,13 +1,12 @@
-# PR hygiene: no-emoji over the PR title, body, and changed files, plus gitleaks
-# over the PR title, body, and full history. One shared job from the org
-# standard (big-minds-tiny-hands/.github CI-STANDARD.md) instead of a job per
-# guard. The conventional PR title is a Mergify merge protection (.mergify.yml).
+# PR hygiene: no-emoji over the PR title, body, and changed files, plus gitleaks over the PR title, body, and full
+# history. Inlined from the org standard (big-minds-tiny-hands/.github pr-hygiene.yml) because a public repository
+# cannot call a reusable workflow that lives in a private one. The job keeps the check name the queue and the
+# ruleset require: "PR hygiene / checks". The conventional PR title is a Mergify merge protection (.mergify.yml).
 name: PR hygiene
 
 on:
   pull_request:
-    # edited: the queue squashes the PR title and body onto main, so a changed
-    # body is scanned again before it merges.
+    # edited: the queue squashes the PR title and body onto main, so a changed body is scanned again before it merges.
     types: [opened, synchronize, reopened, edited]
 
 concurrency:
@@ -18,8 +17,51 @@ permissions:
   contents: read
 
 jobs:
-  hygiene:
-    name: PR hygiene
-    uses: big-minds-tiny-hands/.github/.github/workflows/pr-hygiene.yml@main
-    with:
-      secret-scan: full
+  checks:
+    name: PR hygiene / checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      HEAD_REF: ${{ github.head_ref }}
+      MERGE_QUEUE_PR: ${{ startsWith(github.head_ref, 'mergify/') && github.event.pull_request.user.login == 'mergify[bot]' }}
+      GITLEAKS_VERSION: 8.28.0
+    steps:
+      - uses: actions/checkout@v6
+        if: env.MERGE_QUEUE_PR != 'true'
+        with:
+          fetch-depth: 0
+
+      # PR text and SHAs reach the scripts through env, never through ${{ }} inside a run block.
+      - name: No emoji in PR text or changed files
+        if: env.MERGE_QUEUE_PR != 'true'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          printf '%s\n%s\n' "${PR_TITLE:-}" "${PR_BODY:-}" > "$RUNNER_TEMP/pr-text.txt"
+          ignore='\.(png|jpg|jpeg|gif|webp|ico|svg|woff2?|ttf|otf|pdf|lock|min\.js|min\.css)$'
+          mapfile -t files < <(git diff --name-only --diff-filter=d "$BASE_SHA" "$HEAD_SHA" | grep -vE "$ignore" || true)
+          node scripts/check-no-emoji.mjs "$RUNNER_TEMP/pr-text.txt" "${files[@]}"
+
+      - name: Secret scan (gitleaks)
+        if: env.MERGE_QUEUE_PR != 'true'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          url="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL "$url" | tar -xz -C "$RUNNER_TEMP" gitleaks
+          config=()
+          if [ -f .gitleaks.toml ]; then config=(--config .gitleaks.toml); fi
+          mkdir -p "$RUNNER_TEMP/pr-text"
+          printf '%s\n%s\n' "${PR_TITLE:-}" "${PR_BODY:-}" > "$RUNNER_TEMP/pr-text/pr-text.txt"
+          "$RUNNER_TEMP/gitleaks" dir "$RUNNER_TEMP/pr-text" "${config[@]}" --no-banner --redact --exit-code 1
+          "$RUNNER_TEMP/gitleaks" git . "${config[@]}" --no-banner --redact --exit-code 1
+
+      - name: Merge-queue branch, already checked on each PR
+        if: env.MERGE_QUEUE_PR == 'true'
+        run: echo "Skipping hygiene on $HEAD_REF; each queued PR passed it on its own head."

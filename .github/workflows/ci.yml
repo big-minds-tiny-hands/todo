@@ -17,7 +17,7 @@ permissions:
 jobs:
   quality:
     name: Quality gate
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
@@ -58,5 +58,11 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      # The auth route and the Convex client read these when their modules load. No page
+      # calls Convex during the build, so a placeholder deployment is enough here; Vercel
+      # builds with the real ones.
       - name: Build
+        env:
+          NEXT_PUBLIC_CONVEX_URL: https://ci-placeholder.convex.cloud
+          NEXT_PUBLIC_CONVEX_SITE_URL: https://ci-placeholder.convex.site
         run: bun run build
