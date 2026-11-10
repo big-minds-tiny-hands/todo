@@ -69,7 +69,7 @@ export default function SignUpPage() {
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 18 }} aria-busy={busy}>
           <div className="field">
             <label htmlFor="name">Name</label>
-            <input className="input" id="name" name="name" autoComplete="name" placeholder="Melina Maldonado…" required disabled={busy} value={name} onChange={(e) => setName(e.target.value)} />
+            <input className="input" id="name" name="name" autoComplete="name" placeholder="Sam Rivera…" required disabled={busy} value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="field">
             <label htmlFor="email">Email</label>
