@@ -17,7 +17,11 @@ function join(hour: string, minute: string, period: string) {
   return `${String(h).padStart(2, "0")}:${minute}`;
 }
 
-/** The app's time picker: hour, minute and AM or PM, each a shadcn Select. Never the browser's own time input. */
+/**
+ * The app's time picker: hour, minute and AM or PM, each a shadcn Select. Never the browser's own time input.
+ * Each menu drops below or above its part instead of centring the chosen value on it, which near the bottom of a
+ * sheet left a short list behind scroll arrows.
+ */
 export function TimeField({ value, onChange, label = "Time" }: { value: string; onChange: (value: string) => void; label?: string }) {
   const { hour, minute, period } = split(value);
   // A time saved off the 5-minute grid (an imported 9:07) stays choosable.
@@ -27,7 +31,7 @@ export function TimeField({ value, onChange, label = "Time" }: { value: string; 
       <SelectTrigger className="time-part" aria-label={`${label} ${name}`}>
         <SelectValue />
       </SelectTrigger>
-      <SelectContent className="time-menu">
+      <SelectContent className="time-menu" alignItemWithTrigger={false}>
         {options.map((option) => (
           <SelectItem key={option} value={option}>
             {option}

@@ -346,6 +346,7 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
 .sheet[data-swiping] { transition-duration: 0ms; user-select: none; }
 .sheet[data-ending-style] { transition-duration: calc(var(--drawer-swipe-strength, 1) * 400ms); }
 /* A sheet's main button stays on screen while the form above it scrolls, such as with the day picker open. */
+.sheet:has(.sheet-foot) { scroll-padding-bottom: 96px; }
 .sheet-foot { position: sticky; z-index: 1; bottom: calc(-1 * var(--sheet-b)); margin: 0 calc(-1 * var(--sheet-x)) calc(-1 * var(--sheet-b)); padding: 8px var(--sheet-x) var(--sheet-b); background: var(--s1); }
 .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--s3); align-self: center; flex: none; }
 .menu { z-index: 41; background: var(--s2); border: 1px solid var(--s3); border-radius: 18px; padding: 6px; box-shadow: var(--shadow); display: flex; flex-direction: column; min-width: 272px; outline: none; }
