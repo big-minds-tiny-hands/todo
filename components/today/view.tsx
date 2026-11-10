@@ -1,7 +1,7 @@
 import type { FunctionReturnType } from "convex/server";
 import type { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
-import { clockLabel, lengthLabel, minutesOf } from "@/lib/day";
+import { clockLabel, lengthLabel, minutesOf, toDay } from "@/lib/day";
 import { PRIORITY_LABEL } from "@/components/ui-todo";
 
 export type Task = Doc<"tasks">;
@@ -83,7 +83,14 @@ export function slotMeta(task: Task, now: boolean) {
   return parts.filter(Boolean).join(" · ");
 }
 
+/** Picked for Today only after its time slot had ended, so there is nothing to ask about. */
+function pickedLate(task: Task, today: string) {
+  if (task.pickedAt === undefined) return false;
+  const picked = new Date(task.pickedAt);
+  return toDay(picked) === today && picked.getHours() * 60 + picked.getMinutes() >= slotEnd(task);
+}
+
 /** The first time slot that has passed without a check, for the "Did you do this?" sheet. */
-export function slotToCheck(data: TodayData, minutes: number, dismissed: ReadonlySet<string>) {
-  return data.schedule.find((t) => !t.done && !dismissed.has(t._id) && slotEnd(t) <= minutes);
+export function slotToCheck(data: TodayData, today: string, minutes: number, dismissed: ReadonlySet<string>) {
+  return data.schedule.find((t) => !t.done && !dismissed.has(t._id) && slotEnd(t) <= minutes && !pickedLate(t, today));
 }

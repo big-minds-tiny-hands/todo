@@ -24,6 +24,11 @@ function currentFocusSet(tasks: Task[], today: string) {
   return tasks.reduce((max, t) => (t.focusDay === today && t.focusSet ? Math.max(max, t.focusSet) : max), 0);
 }
 
+/** A task already on Today keeps the moment it arrived. */
+function pickedAt(task: Task, today: string) {
+  return placeOf(task, today).kind === "today" ? task.pickedAt : Date.now();
+}
+
 function byTime(a: Task, b: Task) {
   return (a.startTime ?? "").localeCompare(b.startTime ?? "");
 }
@@ -171,6 +176,7 @@ export const create = mutation({
       done: false,
       todayDay: args.todayDay,
       plannedDay: args.plannedDay,
+      pickedAt: args.todayDay || args.plannedDay ? Date.now() : undefined,
       startTime: args.startTime,
       lengthMin: args.lengthMin,
       checklist: [],
@@ -202,7 +208,10 @@ export const update = mutation({
     if (fields.notes !== undefined) patch.notes = fields.notes;
     if (fields.priority !== undefined) patch.priority = fields.priority;
     if (fields.kind !== undefined) patch.kind = fields.kind;
-    if (fields.plannedDay !== undefined) patch.plannedDay = fields.plannedDay ?? undefined;
+    if (fields.plannedDay !== undefined) {
+      patch.plannedDay = fields.plannedDay ?? undefined;
+      if (fields.plannedDay) patch.pickedAt = Date.now();
+    }
     if (fields.startTime !== undefined) patch.startTime = fields.startTime ?? undefined;
     if (fields.lengthMin !== undefined) patch.lengthMin = fields.lengthMin ?? undefined;
     await ctx.db.patch(id, patch);
@@ -226,8 +235,8 @@ export const addToToday = mutation({
   returns: v.null(),
   handler: async (ctx, { id, today }) => {
     const userId = await requireUserId(ctx);
-    await ownTask(ctx, userId, id);
-    await ctx.db.patch(id, { todayDay: today });
+    const task = await ownTask(ctx, userId, id);
+    await ctx.db.patch(id, { todayDay: today, pickedAt: pickedAt(task, today) });
     return null;
   },
 });
@@ -266,8 +275,8 @@ export const startFocus = mutation({
     for (const t of currentOpen) await ctx.db.patch(t._id, { focusDay: undefined, focusSet: undefined, focusSlot: undefined });
     const setNumber = currentOpen.length > 0 ? Math.max(current, 1) : current + 1;
     for (const [slot, id] of ids.entries()) {
-      await ownTask(ctx, userId, id);
-      await ctx.db.patch(id, { focusDay: today, focusSet: setNumber, focusSlot: slot, todayDay: today });
+      const task = await ownTask(ctx, userId, id);
+      await ctx.db.patch(id, { focusDay: today, focusSet: setNumber, focusSlot: slot, todayDay: today, pickedAt: pickedAt(task, today) });
     }
     return null;
   },
@@ -279,7 +288,7 @@ export const addToFocus = mutation({
   returns: v.null(),
   handler: async (ctx, { id, today }) => {
     const userId = await requireUserId(ctx);
-    await ownTask(ctx, userId, id);
+    const task = await ownTask(ctx, userId, id);
     const settings = await readSettings(ctx, userId);
     const everything = [...(await openTasks(ctx, userId)), ...(await doneOn(ctx, userId, today))];
     let set = currentFocusSet(everything, today);
@@ -289,7 +298,7 @@ export const addToFocus = mutation({
       members = [];
     }
     if (members.length >= settings.focusSize) throw new ConvexError(`Your focus set already has ${settings.focusSize}`);
-    await ctx.db.patch(id, { focusDay: today, focusSet: set, focusSlot: members.length, todayDay: today });
+    await ctx.db.patch(id, { focusDay: today, focusSet: set, focusSlot: members.length, todayDay: today, pickedAt: pickedAt(task, today) });
     return null;
   },
 });

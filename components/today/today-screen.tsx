@@ -200,7 +200,7 @@ export function TodayScreen() {
       break;
   }
 
-  const slot = data && moment === null ? slotToCheck(data, minutes, dismissed) : undefined;
+  const slot = data && moment === null ? slotToCheck(data, today, minutes, dismissed) : undefined;
   return (
     <>
       {body}
