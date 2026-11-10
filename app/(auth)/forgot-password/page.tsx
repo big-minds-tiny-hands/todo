@@ -2,21 +2,29 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { ChevronLeft, MailIcon, SpinnerIcon } from "@/components/icons";
+import { AlertIcon, ChevronLeft, MailIcon, SpinnerIcon } from "@/components/icons";
 import { authClient } from "@/lib/auth-client";
+import { unexpectedAuthError } from "@/lib/auth-error";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function send(event?: FormEvent) {
     event?.preventDefault();
     setBusy(true);
+    setError(null);
     const address = email.trim();
-    // Always show "sent", so the screen never reveals which emails have accounts.
-    await authClient.requestPasswordReset({ email: address, redirectTo: `${window.location.origin}/reset-password` });
+    // The server answers the same for every email, so "sent" never reveals which emails have accounts.
+    const { error } = await authClient.requestPasswordReset({ email: address, redirectTo: `${window.location.origin}/reset-password` });
     setBusy(false);
+    if (error) {
+      setSentTo(null);
+      setError(error.status === 429 ? "Too many tries. Wait a few minutes, then try again." : unexpectedAuthError("forgot-password", error));
+      return;
+    }
     setSentTo(address);
   }
 
@@ -56,7 +64,13 @@ export default function ForgotPasswordPage() {
             We&apos;ll email you a link to set a new one.
           </p>
         </div>
-        <form onSubmit={send} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <form onSubmit={send} style={{ display: "flex", flexDirection: "column", gap: 18 }} aria-busy={busy}>
+          {error && (
+            <p className="err-text" role="alert">
+              <AlertIcon size={18} />
+              {error}
+            </p>
+          )}
           <div className="field">
             <label htmlFor="email">Email</label>
             <input className="input" id="email" name="email" spellCheck={false} placeholder="you@example.com…" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
