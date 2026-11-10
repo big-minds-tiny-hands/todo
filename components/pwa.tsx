@@ -18,7 +18,7 @@ export function Pwa() {
     function promptUpdate() {
       if (prompted || !sw.controller) return;
       prompted = true;
-      showToast("A new version of Todo is ready", {
+      showToast("A new version of Tiny ToDo is ready", {
         duration: Infinity,
         action: {
           label: "Reload",

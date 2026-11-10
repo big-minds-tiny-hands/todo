@@ -9,15 +9,17 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { ArrowDown, ArrowUp, CalendarIcon, CheckIcon, ClockIcon, MinusIcon, SunIcon, TrashIcon } from "@/components/icons";
 import { PRIORITY_LABEL, PriorityDot } from "@/components/ui-todo";
 import { showToast } from "@/lib/reward";
-import { isOnToday, type Task } from "@/components/tasks/when";
+import type { Task } from "@/components/tasks/when";
+import { placeOf } from "@/lib/placement";
 
 /** Takes a task out of All tasks at once, so a swiped or deleted row leaves the list without waiting on the server. */
 function leaveAllTasks(store: OptimisticLocalStore, id: Id<"tasks">, onToday: boolean) {
   for (const { args, value } of store.getAllQueries(api.tasks.all)) {
-    if (!value || !value.tasks.some((t) => t._id === id)) continue;
+    if (!value || ![...value.pool, ...value.planned].some((t) => t._id === id)) continue;
     store.setQuery(api.tasks.all, args, {
       ...value,
-      tasks: value.tasks.filter((t) => t._id !== id),
+      pool: value.pool.filter((t) => t._id !== id),
+      planned: value.planned.filter((t) => t._id !== id),
       onTodayCount: value.onTodayCount + (onToday ? 1 : 0),
     });
   }
@@ -36,11 +38,18 @@ export function useDeleteTask() {
   };
 }
 
+/** Puts a task on Today with an Undo toast. Undo waits for the add to land, then takes the task off Today. */
 export function useAddToToday() {
   const addToToday = useMutation(api.tasks.addToToday).withOptimisticUpdate((store, { id }) => leaveAllTasks(store, id, true));
+  const removeFromToday = useMutation(api.tasks.removeFromToday);
   return (task: Task, today: string) => {
-    showToast("Added to Today", { icon: <CheckIcon size={18} style={{ strokeWidth: 2.6 }} />, duration: 2000 });
-    return addToToday({ id: task._id, today });
+    const adding = addToToday({ id: task._id, today });
+    showToast("Added to Today", {
+      icon: <CheckIcon size={18} style={{ strokeWidth: 2.6 }} />,
+      duration: 4000,
+      action: { label: "Undo", onClick: () => void adding.then(() => removeFromToday({ id: task._id, today })) },
+    });
+    return adding;
   };
 }
 
@@ -78,7 +87,7 @@ export function TaskActionsMenu({
   const removeFromToday = useMutation(api.tasks.removeFromToday);
   const addToToday = useAddToToday();
   const deleteTask = useDeleteTask();
-  const onToday = isOnToday(task, today);
+  const onToday = placeOf(task, today).kind === "today";
 
   return (
     <Menu.Root open={open} onOpenChange={onOpenChange}>

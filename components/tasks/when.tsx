@@ -3,15 +3,6 @@ import { addDays, clockLabel, fromDay, lengthLabel, shortDate, toDay, weekday } 
 
 export type Task = Doc<"tasks">;
 
-export function isOnToday(task: Task, today: string) {
-  return task.todayDay === today || task.focusDay === today || task.plannedDay === today;
-}
-
-/** The day a task sits on: Today wins over a planned day. */
-export function taskDay(task: Task, today: string): string | undefined {
-  return isOnToday(task, today) ? today : task.plannedDay;
-}
-
 export function dayLabel(day: string, today: string) {
   if (day === today) return "Today";
   if (day === addDays(today, 1)) return "Tomorrow";

@@ -6,7 +6,8 @@ import { api } from "@/convex/_generated/api";
 import { Sheet } from "@/components/ui-todo";
 import { addDays, shortDate } from "@/lib/day";
 import { DayPicker } from "@/components/tasks/day-picker";
-import { nextMonday, taskDay, type Task } from "@/components/tasks/when";
+import { nextMonday, type Task } from "@/components/tasks/when";
+import { dayOf } from "@/lib/placement";
 
 type DayProps = { task: Task; today: string };
 
@@ -21,7 +22,7 @@ export function DaySheet({ open, onOpenChange, ...props }: DayProps & { open: bo
 function DayForm({ task, today, onDone }: DayProps & { onDone: () => void }) {
   const update = useMutation(api.tasks.update);
   const removeFromToday = useMutation(api.tasks.removeFromToday);
-  const current = taskDay(task, today) ?? null;
+  const current = dayOf(task, today) ?? null;
   const [selected, setSelected] = useState<string | null>(current);
   const [busy, setBusy] = useState(false);
 

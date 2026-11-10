@@ -12,12 +12,14 @@ import { clockLabel, longDate } from "@/lib/day";
 import { reward, showToast, type RewardPrefs } from "@/lib/reward";
 import { checklistLabel, clockOf, isNow, pickMeta, slotMeta, type GoalRow, type Task } from "./view";
 
-export function TodayHeader({ today, title = "Today", children }: { today: string; title?: string; children: ReactNode }) {
+/** `progress` sits under the title, where it has room for its words on a phone. */
+export function TodayHeader({ today, title = "Today", progress, children }: { today: string; title?: string; progress?: ReactNode; children: ReactNode }) {
   return (
     <header className="head">
       <div>
         <p className="eyebrow">{longDate(today)}</p>
         <h1 className="h1">{title}</h1>
+        {progress}
       </div>
       <div className="head-actions">{children}</div>
     </header>
@@ -26,8 +28,9 @@ export function TodayHeader({ today, title = "Today", children }: { today: strin
 
 export function AddButton({ onClick }: { onClick: () => void }) {
   return (
-    <button type="button" className="iconbtn" aria-label="Add a task" onClick={onClick}>
+    <button type="button" className="btn sec add" onClick={onClick}>
       <PlusIcon />
+      Add task
     </button>
   );
 }
@@ -76,10 +79,11 @@ export function FocusSection({ focus, streak, ...props }: { focus: Task[]; strea
             {done} of {focus.length} done
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <StreakPill streak={streak} />
-          <Link className="iconbtn ghost" href="/focus" aria-label="Open focus mode" style={{ margin: "-8px -8px -8px 0" }}>
+          <Link className="btn sec act" href="/focus" aria-label="Open focus mode">
             <ExpandIcon />
+            Focus mode
           </Link>
         </div>
       </div>
@@ -111,7 +115,7 @@ export function FocusSection({ focus, streak, ...props }: { focus: Task[]; strea
 }
 
 /** Swipe right on an open Today task to complete it, with the same reward as its check. */
-function completeAction(task: Task, onCheck: CheckProps["onCheck"]): SwipeAction | undefined {
+export function completeAction(task: Task, onCheck: CheckProps["onCheck"]): SwipeAction | undefined {
   if (task.done) return undefined;
   return { label: "Done", icon: <CheckIcon />, tone: "lime", run: () => onCheck(task, true) };
 }
@@ -136,6 +140,20 @@ export function Disclosure({ id, label, children }: { id: string; label: ReactNo
   );
 }
 
+/** An open Today task: the check finishes it, the title opens it, and `children` add trailing controls. */
+export function OpenTaskRow({ task, meta, onCheck, children }: { task: Task; meta: string; onCheck: CheckProps["onCheck"]; children?: ReactNode }) {
+  return (
+    <div className="task">
+      <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`Complete ${task.title}`} />
+      <Link className="t" href={`/task/${task._id}`} style={{ textDecoration: "none" }}>
+        <div className="tt">{task.title}</div>
+        {meta && <div className="m">{meta}</div>}
+      </Link>
+      {children}
+    </div>
+  );
+}
+
 /** The rest of Today below a running focus set, with the same check and swipe as the focus set. */
 export function MoreToday({ tasks, today, onCheck }: { tasks: Task[]; today: string; onCheck: CheckProps["onCheck"] }) {
   if (tasks.length === 0) return null;
@@ -143,13 +161,7 @@ export function MoreToday({ tasks, today, onCheck }: { tasks: Task[]; today: str
     <Disclosure id="more-today" label={`${tasks.length} more ${tasks.length === 1 ? "task" : "tasks"} today`}>
       {tasks.map((task) => (
         <SwipeRow key={task._id} right={completeAction(task, onCheck)}>
-          <div className="task">
-            <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`Complete ${task.title}`} />
-            <Link className="t" href={`/task/${task._id}`} style={{ textDecoration: "none" }}>
-              <div className="tt">{task.title}</div>
-              <div className="m">{pickMeta(task, today)}</div>
-            </Link>
-          </div>
+          <OpenTaskRow task={task} meta={pickMeta(task, today)} onCheck={onCheck} />
         </SwipeRow>
       ))}
     </Disclosure>
@@ -207,14 +219,23 @@ export function ScheduleSection({ schedule, minutes, onCheck }: { schedule: Task
   );
 }
 
-export function GoalsSection({ goals, today, prefs }: { goals: GoalRow[]; today: string; prefs: RewardPrefs }) {
+/** With `invite`, a day with no goals shows a link to add one instead of nothing. */
+export function GoalsSection({ goals, today, prefs, invite }: { goals: GoalRow[]; today: string; prefs: RewardPrefs; invite?: boolean }) {
   const setMet = useMutation(api.goals.setMet).withOptimisticUpdate((store, { id, today: day, met }) => {
     for (const { args, value } of store.getAllQueries(api.goals.forDay)) {
       if (!value || args.today !== day) continue;
       store.setQuery(api.goals.forDay, args, value.map((r) => (r.goal._id === id ? { ...r, met } : r)));
     }
   });
-  if (goals.length === 0) return null;
+  if (goals.length === 0) {
+    if (!invite) return null;
+    return (
+      <Link className="link" href="/settings/goals/new" style={{ gridArea: "goals", margin: "-8px 4px 0" }}>
+        <PlusIcon size={18} />
+        Add a daily goal
+      </Link>
+    );
+  }
   const metCount = goals.filter((r) => r.met).length;
 
   function check({ goal }: GoalRow, met: boolean) {
@@ -234,15 +255,20 @@ export function GoalsSection({ goals, today, prefs }: { goals: GoalRow[]; today:
     <section style={{ gridArea: "goals" }}>
       <h2 className="label">
         <span>Daily goals</span>
-        {metCount === goals.length ? (
-          <b className="num" style={{ color: "var(--lime-tx)" }}>
-            {metCount} of {goals.length} met
-          </b>
-        ) : (
-          <span className="num">
-            {metCount} of {goals.length} met
-          </span>
-        )}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
+          {metCount === goals.length ? (
+            <b className="num" style={{ color: "var(--lime-tx)" }}>
+              {metCount} of {goals.length} met
+            </b>
+          ) : (
+            <span className="num">
+              {metCount} of {goals.length} met
+            </span>
+          )}
+          <Link className="label-link" href="/settings/goals">
+            Manage
+          </Link>
+        </span>
       </h2>
       <div className="card">
         {goals.map((row) => (

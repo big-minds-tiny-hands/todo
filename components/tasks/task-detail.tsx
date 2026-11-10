@@ -10,7 +10,8 @@ import { CalendarIcon, CheckIcon, ChevronLeft, ClockIcon, MoreIcon, PeopleIcon, 
 import { DaySheet } from "@/components/tasks/day-sheet";
 import { TaskActionsMenu, useDeleteTask } from "@/components/tasks/task-actions-menu";
 import { TimeSheet } from "@/components/tasks/time-sheet";
-import { dayLabel, slotLabel, taskDay, type Task } from "@/components/tasks/when";
+import { dayLabel, slotLabel, type Task } from "@/components/tasks/when";
+import { dayOf } from "@/lib/placement";
 import { Check, PrioritySeg } from "@/components/ui-todo";
 import { useToday } from "@/hooks/use-today";
 import { clockLabel, minutesOf } from "@/lib/day";
@@ -27,7 +28,7 @@ export function TaskDetail({ id }: { id: Id<"tasks"> }) {
 
 /** A meeting on Today whose slot has ended without being checked off. */
 function isMissed(task: Task, today: string, minutes: number) {
-  if (task.kind !== "meeting" || task.done || !task.startTime || taskDay(task, today) !== today) return false;
+  if (task.kind !== "meeting" || task.done || !task.startTime || dayOf(task, today) !== today) return false;
   return minutes >= minutesOf(task.startTime) + (task.lengthMin ?? 0);
 }
 
@@ -38,7 +39,7 @@ function TaskView({ task, today, minutes }: { task: Task; today: string; minutes
   const markMissed = useMutation(api.tasks.markMissed);
   const deleteTask = useDeleteTask();
   const [panel, setPanel] = useState<Panel>(null);
-  const day = taskDay(task, today);
+  const day = dayOf(task, today);
   const back = day === today ? { href: "/", label: "Today" } : { href: "/tasks", label: "All tasks" };
   const missed = isMissed(task, today, minutes);
   const slot = slotLabel(task);

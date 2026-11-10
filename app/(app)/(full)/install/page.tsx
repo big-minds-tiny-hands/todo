@@ -2,9 +2,9 @@ import Link from "next/link";
 import { CheckIcon, ChevronLeft, MonitorIcon } from "@/components/icons";
 
 const STEPS = [
-  { title: "Open Todo in Safari", hint: "On iPhone, use Safari. On Android, use Chrome." },
+  { title: "Open Tiny ToDo in Safari", hint: "On iPhone, use Safari. On Android, use Chrome." },
   { title: "Tap Share, then Add to Home Screen", hint: "On Android: menu, then Install app." },
-  { title: "Open Todo from your home screen", hint: "You stay signed in." },
+  { title: "Open Tiny ToDo from your home screen", hint: "You stay signed in." },
 ];
 
 export default function InstallPage() {
@@ -36,7 +36,7 @@ export default function InstallPage() {
           </span>
           <div>
             <h1 className="h2" style={{ fontSize: 26 }}>
-              Put Todo on your phone
+              Put Tiny ToDo on your phone
             </h1>
             <p className="muted small" style={{ margin: "6px 0 0" }}>
               Opens full screen, stays signed in.

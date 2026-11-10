@@ -65,13 +65,3 @@ export async function readSettings(ctx: QueryCtx, userId: string) {
     newDayBannerSeen: row.newDayBannerSeen,
   };
 }
-
-export const PRIORITY_RANK = { high: 0, normal: 1, low: 2 } as const;
-
-export function byPriority(a: Task, b: Task) {
-  return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order;
-}
-
-export function isOnDay(task: Task, today: string) {
-  return task.todayDay === today || task.plannedDay === today || task.focusDay === today;
-}

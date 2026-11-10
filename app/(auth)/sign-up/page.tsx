@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
 import { AlertIcon, Logo, SpinnerIcon } from "@/components/icons";
 import { SocialSignIn } from "@/components/social-sign-in";
 import { authClient } from "@/lib/auth-client";
@@ -27,9 +27,19 @@ function ErrorText({ id, message }: { id: string; message: string }) {
 }
 
 export default function SignUpPage() {
+  return (
+    <Suspense>
+      <SignUp />
+    </Suspense>
+  );
+}
+
+/** `?email=` fills the email, so a sign-in with no account carries what was typed. */
+function SignUp() {
   const router = useRouter();
+  const params = useSearchParams();
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => params.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<SignUpError | null>(null);
   const [busy, setBusy] = useState(false);
@@ -52,7 +62,7 @@ export default function SignUpPage() {
       <main className="narrow" style={{ flex: 1, display: "flex", flexDirection: "column", padding: "72px 24px 40px", gap: 40 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Logo />
-          <span style={{ fontFamily: "var(--fd)", fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em" }}>Todo</span>
+          <span style={{ fontFamily: "var(--fd)", fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em" }}>Tiny ToDo</span>
         </div>
 
         <h1 className="h1">Create your account</h1>

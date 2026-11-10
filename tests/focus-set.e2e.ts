@@ -4,7 +4,7 @@ import { expect } from 'e2e';
 const TASK = 'Call the Thursday family back';
 
 // The core loop: put a task on Today, make it the focus set, finish it, and get the reward.
-test('a task added to Today becomes the focus set and finishing it completes the set', { session: 'user' }, async ({ app, screen, agent }) => {
+test('a task added to Today becomes the focus set and finishing it completes the set', { session: 'user' }, async ({ app, screen }) => {
   // Start from an empty account. The dev data dock is dev only and reseeds the signed-in user.
   // All tasks has the dock and never opens a time-slot check, whatever data the account holds.
   await app.open('/tasks');
@@ -19,13 +19,16 @@ test('a task added to Today becomes the focus set and finishing it completes the
   await screen.getByLabel('Task').fill(TASK);
   await screen.getByRole('button', 'Today').tap();
   await screen.getByRole('button', 'Add task').tap();
+  await screen.getByRole('button', 'Close').tap();
 
-  await agent.act(`choose a focus set that holds the task "${TASK}", then start it`);
+  await screen.getByRole('link', 'Choose a focus set').tap();
+  await screen.getByRole('button', `Focus on ${TASK}`).tap();
+  await screen.getByRole('button', 'Start focus set').tap();
   await expect(screen.getByRole('heading', 'Focus')).toBeVisible();
   const check = screen.getByRole('button', `Complete ${TASK}`);
   await expect(check).toBeVisible();
 
   await check.tap();
   await expect(screen.getByRole('heading', 'Focus set done')).toBeVisible();
-  await expect(screen.getByText('1 done today')).toBeVisible();
+  await expect(screen.getByRole('dialog', 'Focus set done').getByText('1 done today')).toBeVisible();
 });
