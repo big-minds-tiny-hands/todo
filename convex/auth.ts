@@ -40,7 +40,7 @@ function socialProviders(): BetterAuthOptions["socialProviders"] {
 
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
-    appName: "Todo",
+    appName: "Tiny ToDo",
     baseURL: process.env.SITE_URL,
     // SITE_URL is trusted already. Add Vercel preview or extra origins as a comma list.
     trustedOrigins: list(process.env.TRUSTED_ORIGINS),
