@@ -81,8 +81,6 @@ export const all = query({
   returns: v.object({
     pool: v.array(taskDoc),
     planned: v.array(taskDoc),
-    // Old installed clients read `tasks` until they reload onto this release. Remove after it has been live a day.
-    tasks: v.array(taskDoc),
     onTodayCount: v.number(),
     hasAnyTask: v.boolean(),
   }),
@@ -97,7 +95,6 @@ export const all = query({
     return {
       pool,
       planned,
-      tasks: [...pool, ...planned],
       onTodayCount: at("today").length,
       hasAnyTask: anyTask,
     };
