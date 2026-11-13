@@ -37,8 +37,8 @@ function patchToday(store: OptimisticLocalStore, id: Id<"tasks">, edit: Edit) {
   }
 }
 
-/** Changes to a running focus set. Each step that removes a task offers Undo. */
-export function useFocusEdit(today: string) {
+/** Changes to a running focus set (number `set`). Each step that removes a task offers Undo. */
+export function useFocusEdit(today: string, set: number) {
   const takeOut = useMutation(api.tasks.removeFromFocus).withOptimisticUpdate((store, { id }) => patchToday(store, id, withoutFocus));
   const sendBack = useMutation(api.tasks.removeFromToday).withOptimisticUpdate((store, { id }) => patchToday(store, id, offToday));
   const pick = useMutation(api.tasks.addToFocus).withOptimisticUpdate((store, { id }) => patchToday(store, id, intoFocus));
@@ -47,13 +47,19 @@ export function useFocusEdit(today: string) {
     showToast(message, {
       icon: <UndoIcon size={18} />,
       duration: 4000,
-      action: { label: "Undo", onClick: () => void removing.then(() => pick({ id, today })) },
+      action: {
+        label: "Undo",
+        onClick: () =>
+          void removing
+            .then(() => pick({ id, today, set }))
+            .catch(() => showToast("Could not put it back. The focus set may be full.", { duration: 5000 })),
+      },
     });
   }
 
   return {
-    takeOut: (task: Task) => undoable("Out of focus", takeOut({ id: task._id }), task._id),
-    sendBack: (task: Task) => undoable("Back in All tasks", sendBack({ id: task._id, today }), task._id),
-    pick: (task: Task) => void pick({ id: task._id, today }),
+    takeOut: (task: Task) => undoable("Moved to More today", takeOut({ id: task._id }), task._id),
+    sendBack: (task: Task) => undoable("Back to All tasks", sendBack({ id: task._id, today }), task._id),
+    pick: (task: Task) => void pick({ id: task._id, today, set }),
   };
 }

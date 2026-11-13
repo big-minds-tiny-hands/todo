@@ -150,7 +150,8 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 .phone { width: 100%; min-height: 100dvh; background: var(--bg); color: var(--tx); font-family: var(--ff); display: flex; flex-direction: column; position: relative; padding-top: env(safe-area-inset-top); padding-bottom: var(--kb, 0px); }
 .phone.center { justify-content: center; }
 .scroll { flex: 1; display: flex; flex-direction: column; gap: 20px; padding: 0 16px 20px; }
-.head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 24px 20px 16px; }
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 24px 20px 16px; }
+.head-progress { flex-basis: 100%; margin-top: -12px; }
 .head-actions { display: flex; gap: 8px; align-items: center; }
 .bar-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 4px; min-height: 60px; }
 .cta { padding: 12px 16px 16px; flex: none; display: flex; flex-direction: column; gap: 4px; }
@@ -239,7 +240,8 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 .mark.out > span { border: 0; border-radius: 50%; background: var(--s3); color: var(--tx); }
 .mark.out .i { width: 16px; height: 16px; stroke-width: 2.6; }
 .focus-pick { display: flex; flex-direction: column; gap: 2px; padding: 4px 0 6px; border-top: 1px solid var(--line); margin-top: 2px; }
-.focus-pick .slot-empty { margin: 6px 10px 4px; }
+.focus-pick-title { margin: 10px 14px 2px; font-size: 13px; font-weight: 600; color: var(--tx2); letter-spacing: 0.01em; }
+.slot-empty .mark > span { color: var(--tx2); }
 /* Edit mode swaps the rows; each new row settles in from just below, so a picked task visibly lands in its slot. */
 .focus[data-editing] .task, .focus[data-editing] .focus-pick { animation: settle 0.18s cubic-bezier(0.23, 1, 0.32, 1) both; }
 @keyframes settle { from { opacity: 0; transform: translateY(4px); } }
@@ -431,8 +433,9 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
 .more-toggle .t { flex: none; font-weight: 600; }
 .more-sum { flex: 1; min-width: 0; text-align: right; font-size: 15px; color: var(--tx2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .more-sum .now { color: var(--lime-tx); font-weight: 600; }
-.more-chevron { color: var(--tx3); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-.more-toggle[aria-expanded="true"] .more-chevron { transform: rotate(90deg); }
+/* The row opens in place, so its chevron points down and turns up when open, not right like a link to a new screen. */
+.more-chevron { color: var(--tx3); transform: rotate(90deg); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.more-toggle[aria-expanded="true"] .more-chevron { transform: rotate(-90deg); }
 .more-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
 .more-panel[data-open] { grid-template-rows: 1fr; }
 /* Phone Today: the sections under the focus set as one grouped list. Each row opens its list inside the group. */

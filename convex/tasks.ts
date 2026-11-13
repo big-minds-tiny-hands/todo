@@ -289,18 +289,21 @@ export const startFocus = mutation({
   },
 });
 
-/** Add one task to the current focus set, or start set 1 with it. */
+/**
+ * Add one task to the current focus set, or start a new set with it once the current one is finished.
+ * `set` keeps the task in that set even when its other tasks are done: editing a set swaps its last open task.
+ */
 export const addToFocus = mutation({
-  args: { id: v.id("tasks"), today: day },
+  args: { id: v.id("tasks"), today: day, set: v.optional(v.number()) },
   returns: v.null(),
-  handler: async (ctx, { id, today }) => {
+  handler: async (ctx, { id, today, set: keep }) => {
     const userId = await requireUserId(ctx);
     const task = await ownTask(ctx, userId, id);
     const settings = await readSettings(ctx, userId);
     const everything = [...(await openTasks(ctx, userId)), ...(await doneOn(ctx, userId, today))];
     let set = currentFocusSet(everything, today);
     let members = everything.filter((t) => t.focusDay === today && t.focusSet === set && set > 0);
-    if (set === 0 || members.every((t) => t.done)) {
+    if (set === 0 || (members.every((t) => t.done) && keep !== set)) {
       set += 1;
       members = [];
     }

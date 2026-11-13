@@ -13,16 +13,16 @@ import { reward, showToast, type RewardPrefs } from "@/lib/reward";
 import { useFocusEdit } from "./use-focus-edit";
 import { checklistLabel, clockOf, isNow, pickMeta, slotEnd, slotMeta, type GoalRow, type Task } from "./view";
 
-/** `progress` sits under the title, where it has room for its words on a phone. */
+/** `progress` gets its own line under the title and the actions, where its words fit on a phone. */
 export function TodayHeader({ today, title = "Today", progress, children }: { today: string; title?: string; progress?: ReactNode; children: ReactNode }) {
   return (
     <header className="head">
       <div>
         <p className="eyebrow">{longDate(today)}</p>
         <h1 className="h1">{title}</h1>
-        {progress}
       </div>
       <div className="head-actions">{children}</div>
+      {progress && <div className="head-progress">{progress}</div>}
     </header>
   );
 }
@@ -72,9 +72,25 @@ function focusMeta(task: Task, { pending, justChecked }: Omit<CheckProps, "onChe
  * The focus set. Each open row finishes on its check, opens on its title, and swipes left back to All tasks.
  * Edit takes tasks out, sends them back, and fills the free slots from the rest of Today.
  */
-export function FocusSection({ focus, candidates, size, today, ...props }: { focus: Task[]; candidates: Task[]; size: number; today: string } & CheckProps) {
-  const [editing, setEditing] = useState(false);
-  const edit = useFocusEdit(today);
+export function FocusSection({
+  focus,
+  candidates,
+  size,
+  set,
+  today,
+  editing,
+  onEditingChange,
+  ...props
+}: {
+  focus: Task[];
+  candidates: Task[];
+  size: number;
+  set: number;
+  today: string;
+  editing: boolean;
+  onEditingChange: (editing: boolean) => void;
+} & CheckProps) {
+  const edit = useFocusEdit(today, set);
   const left = focus.filter((t) => !t.done).length;
   const free = size - focus.length;
   return (
@@ -83,17 +99,17 @@ export function FocusSection({ focus, candidates, size, today, ...props }: { foc
         <div>
           <h2 className="h3">Focus</h2>
           <div className="small muted num" style={{ marginTop: 2 }}>
-            {editing ? `${focus.length} of ${size} picked` : `${left} left`}
+            {editing ? (free === 0 ? "Set full" : `${free} ${free === 1 ? "slot" : "slots"} free`) : `${left} left`}
           </div>
         </div>
         <div className="focus-actions">
           {editing ? (
-            <button type="button" className="btn pri act" onClick={() => setEditing(false)}>
+            <button type="button" className="btn sec act" onClick={() => onEditingChange(false)}>
               Done
             </button>
           ) : (
             <>
-              <button type="button" className="btn sec act" aria-label="Edit focus set" onClick={() => setEditing(true)}>
+              <button type="button" className="btn sec act" aria-label="Edit focus set" onClick={() => onEditingChange(true)}>
                 <PencilIcon />
                 Edit
               </button>
@@ -105,11 +121,6 @@ export function FocusSection({ focus, candidates, size, today, ...props }: { foc
           )}
         </div>
       </div>
-      {!editing && (
-        <div className="bar" style={{ margin: "0 14px 6px" }}>
-          <i style={{ width: `${focus.length ? ((focus.length - left) / focus.length) * 100 : 0}%` }} />
-        </div>
-      )}
       {focus.map((task) =>
         editing && !task.done ? (
           <div key={task._id} className="task">
@@ -129,14 +140,7 @@ export function FocusSection({ focus, candidates, size, today, ...props }: { foc
       )}
       {editing && free > 0 && (
         <div className="focus-pick">
-          {Array.from({ length: free }, (_, i) => (
-            <div key={i} className="slot-empty">
-              <span className="mark" aria-hidden="true" style={{ margin: "0 -6px" }}>
-                <span>{focus.length + i + 1}</span>
-              </span>
-              {candidates.length > 0 ? "Pick from Today" : "Nothing else on Today"}
-            </div>
-          ))}
+          <h3 className="focus-pick-title">{candidates.length > 0 ? `Pick ${free} more from Today` : "Nothing else on Today"}</h3>
           {candidates.map((task) => (
             <div key={task._id} className="task">
               <TaskLink task={task} meta={pickMeta(task, today, { priority: task.priority === "high" })} />
@@ -169,7 +173,7 @@ function TaskLink({ task, meta }: { task: Task; meta: ReactNode }) {
 function FocusRow({ task, onSendBack, ...props }: { task: Task; onSendBack?: () => void } & CheckProps) {
   const glow = task._id === props.justChecked && task.done;
   const back: SwipeAction | undefined =
-    onSendBack && !task.done ? { label: "All tasks", icon: <ListIcon />, tone: "neutral", leaves: true, run: onSendBack } : undefined;
+    onSendBack && !task.done ? { label: "Not today", icon: <ListIcon />, tone: "neutral", leaves: true, run: onSendBack } : undefined;
   return (
     <SwipeRow right={completeAction(task, props.onCheck)} left={back}>
       <div className={["task", task.done && "done", glow && "glow"].filter(Boolean).join(" ")} style={glow ? { position: "relative" } : undefined}>
@@ -265,7 +269,7 @@ export function OpenTaskRow({ task, meta, onCheck, children }: { task: Task; met
 export function MoreToday({ tasks, today, onCheck }: { tasks: Task[]; today: string; onCheck: CheckProps["onCheck"] }) {
   if (tasks.length === 0) return null;
   return (
-    <Disclosure id="more-today" label="More today" summary={tasks.length} name={`${tasks.length} more ${tasks.length === 1 ? "task" : "tasks"} today`}>
+    <Disclosure id="more-today" label="More today" summary={`${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`} name={`${tasks.length} more ${tasks.length === 1 ? "task" : "tasks"} today`}>
       {tasks.map((task) => (
         <SwipeRow key={task._id} right={completeAction(task, onCheck)}>
           <OpenTaskRow task={task} meta={pickMeta(task, today)} onCheck={onCheck} />
@@ -283,7 +287,7 @@ export function DoneToday({ tasks, onCheck }: { tasks: Task[]; onCheck: CheckPro
   if (tasks.length === 0) return null;
   const newestFirst = [...tasks].sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0));
   return (
-    <Disclosure id="done-today" label="Done today" summary={tasks.length} name={`${tasks.length} done today`}>
+    <Disclosure id="done-today" label="Done today" summary={`${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`} name={`${tasks.length} done today`}>
       {newestFirst.map((task) => (
         <div key={task._id} className="task done">
           <Check checked onChange={() => onCheck(task, false)} label={`Undo ${task.title}`} />
@@ -393,7 +397,7 @@ export function GoalsSection({ goals, today, prefs, invite, compact }: { goals: 
           {rows}
           <Link className="row" href="/settings/goals">
             <span className="t">Manage daily goals</span>
-            <ChevronRight className="more-chevron" />
+            <ChevronRight style={{ color: "var(--tx3)" }} />
           </Link>
         </Disclosure>
       </div>

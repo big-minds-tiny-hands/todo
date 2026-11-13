@@ -38,7 +38,7 @@ test('the focus set can be edited after it starts', { session: 'user' }, async (
   await expect(set.getByRole('link', TOUR)).toBeVisible();
 
   await set.getByRole('button', `Not today: ${FIRE}`).tap();
-  await expect(screen.getByText('Back in All tasks')).toBeVisible();
+  await expect(screen.getByText('Back to All tasks')).toBeVisible();
   await expect(set.getByText(FIRE)).toBeHidden();
   await set.getByRole('button', 'Done').tap();
   await expect(set.getByText('2 left')).toBeVisible();
@@ -49,4 +49,38 @@ test('the focus set can be edited after it starts', { session: 'user' }, async (
   await screen.getByRole('link', 'Today').tap();
   await screen.getByRole('link', /^All tasks/).tap();
   await expect(screen.getByRole('link', new RegExp(FIRE))).toBeVisible();
+});
+
+// Swapping the last open task keeps the set: the finished tasks stay in it and the new pick joins them.
+test('the last open task in a focus set can be swapped for another', { session: 'user' }, async ({ app, screen }) => {
+  await app.open('/tasks');
+  await screen.getByRole('button', 'Dev data').tap();
+  await screen.getByRole('button', 'Empty').tap();
+  await screen.getByRole('button', 'Close').tap();
+
+  await screen.getByRole('button', 'Add a task').tap();
+  await screen.getByRole('button', 'Today').tap();
+  for (const title of [PAINT, PATEL, TOUR]) {
+    await screen.getByLabel('Task').fill(title);
+    await screen.getByRole('button', 'Add task').tap();
+    await expect(screen.getByLabel('Task')).toHaveValue('');
+  }
+  await screen.getByRole('button', 'Close').tap();
+
+  await screen.getByRole('link', 'Today').tap();
+  await screen.getByRole('link', 'Choose a focus set').tap();
+  for (const title of [PAINT, PATEL]) await screen.getByRole('button', `Focus on ${title}`).tap();
+  await screen.getByRole('button', 'Start focus set').tap();
+  const set = screen.getByRole('region', 'Focus set');
+  await set.getByRole('button', `Complete ${PAINT}`).tap();
+  await expect(set.getByText('1 left')).toBeVisible();
+
+  await set.getByRole('button', 'Edit focus set').tap();
+  await set.getByRole('button', `Take ${PATEL} out of focus`).tap();
+  await expect(set.getByText('Pick 2 more from Today')).toBeVisible();
+  await set.getByRole('button', `Pick ${TOUR}`).tap();
+  await set.getByRole('button', 'Done').tap();
+  await expect(set.getByRole('button', `Undo ${PAINT}`)).toBeVisible();
+  await expect(set.getByRole('button', `Complete ${TOUR}`)).toBeVisible();
+  await expect(set.getByText('1 left')).toBeVisible();
 });

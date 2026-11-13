@@ -309,7 +309,7 @@ function NotesField({ task }: { task: Task }) {
           timer.current = window.setTimeout(flush, 700);
         }}
         onBlur={flush}
-        style={{ height: "auto", minHeight: 54, maxHeight: "50dvh", padding: "14px 16px", lineHeight: 1.45, resize: "none", fieldSizing: "content" }}
+        style={{ height: "auto", minHeight: 54, maxHeight: "50dvh", padding: "14px 16px", lineHeight: 1.45, resize: "vertical", fieldSizing: "content" }}
       />
     </div>
   );

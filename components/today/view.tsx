@@ -33,11 +33,13 @@ export function deriveView(
   goals: GoalRow[] | undefined,
   today: string,
   planning: boolean,
+  editingFocus = false,
 ): TodayView {
   if (!data || !goals) return { kind: "loading" };
   if (!data.hasAnyTask && goals.length === 0) return { kind: "firstRun" };
   const open = openToday(data);
-  if (data.focus.some((t) => !t.done)) return { kind: "focus", data, goals };
+  // While the set is being edited it stays on screen, even when its last open task is taken out to swap it.
+  if (data.focus.some((t) => !t.done) || (editingFocus && data.focusSet > 0)) return { kind: "focus", data, goals };
   if (planning) return { kind: "plan", data, goals, today: open };
   const fresh = data.focusSet === 0 && data.doneToday.length === 0;
   if (fresh && data.returnedCount > 0 && data.settings.newDayBannerSeen !== today) {

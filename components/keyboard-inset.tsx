@@ -14,7 +14,7 @@ export function KeyboardInset() {
     const viewport = window.visualViewport;
     if (!viewport) return;
     const root = document.documentElement;
-    let covered = 0;
+    let lastHeight = viewport.height;
 
     function focusedField() {
       const el = document.activeElement;
@@ -25,17 +25,24 @@ export function KeyboardInset() {
     function reveal(field: HTMLElement) {
       // The sheet already sits above the keyboard and scrolls on its own.
       if (field.closest(".sheet")) return field.scrollIntoView({ block: "nearest" });
-      const visibleBottom = viewport!.offsetTop + viewport!.height - 12;
-      const overlap = field.getBoundingClientRect().bottom - visibleBottom;
+      const box = field.getBoundingClientRect();
+      // A field taller than the visible part holds the caret somewhere inside; Safari keeps the caret in view itself.
+      if (box.height > viewport!.height - 24) return;
+      const overlap = box.bottom - (viewport!.offsetTop + viewport!.height - 12);
       if (overlap > 0) window.scrollBy(0, overlap);
     }
 
-    function measure() {
+    function publish() {
       const next = Math.max(0, Math.round(window.innerHeight - viewport!.height - viewport!.offsetTop));
       root.style.setProperty("--kb", `${next}px`);
       root.style.setProperty("--vv-top", `${Math.round(viewport!.offsetTop)}px`);
-      const opened = next > covered;
-      covered = next;
+    }
+
+    /** Only a resize means the keyboard opened. Scrolling with it open moves the viewport and must not pull back. */
+    function onResize() {
+      publish();
+      const opened = viewport!.height < lastHeight;
+      lastHeight = viewport!.height;
       const field = focusedField();
       if (opened && field) requestAnimationFrame(() => reveal(field));
     }
@@ -45,13 +52,13 @@ export function KeyboardInset() {
       if (field instanceof HTMLElement && field.matches(EDITABLE)) reveal(field);
     }
 
-    measure();
-    viewport.addEventListener("resize", measure);
-    viewport.addEventListener("scroll", measure);
+    publish();
+    viewport.addEventListener("resize", onResize);
+    viewport.addEventListener("scroll", publish);
     document.addEventListener("input", onInput);
     return () => {
-      viewport.removeEventListener("resize", measure);
-      viewport.removeEventListener("scroll", measure);
+      viewport.removeEventListener("resize", onResize);
+      viewport.removeEventListener("scroll", publish);
       document.removeEventListener("input", onInput);
     };
   }, []);

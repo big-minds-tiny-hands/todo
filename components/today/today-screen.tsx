@@ -46,12 +46,13 @@ export function TodayScreen() {
   const user = useQuery(api.auth.getCurrentUser);
   const updateSettings = useMutation(api.settings.update);
   const [planning, setPlanning] = useState(false);
+  const [editingFocus, setEditingFocus] = useState(false);
   const [adding, setAdding] = useState<When | null>(null);
   const { dismissed, dismiss } = useDismissedSlots(today);
   const { moment, after, clear } = useMoment(data, wins, today);
   const { check, pending, justChecked } = useCheck(data, today, clear);
 
-  const view = deriveView(data, goals, today, planning);
+  const view = deriveView(data, goals, today, planning, editingFocus);
   const phone = useIsPhone();
   const streak = wins?.streak ?? 0;
   const avatar = <Avatar name={user?.name} />;
@@ -157,7 +158,10 @@ export function TodayScreen() {
               focus={view.data.focus}
               candidates={[...view.data.rest, ...view.data.schedule].filter((t) => !t.done).sort(byPriority)}
               size={view.data.settings.focusSize}
+              set={view.data.focusSet}
               today={today}
+              editing={editingFocus}
+              onEditingChange={setEditingFocus}
               onCheck={onCheck}
               pending={pending}
               justChecked={justChecked}
@@ -253,7 +257,7 @@ function FocusRest({
     <>
       {schedule}
       {goalRows}
-      <div style={{ gridArea: "more", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div className="folds" style={{ gridArea: "more" }}>
         {more}
         {done}
       </div>
@@ -292,7 +296,7 @@ function PlanBody({
               {(task) => (
                 <SwipeRow
                   right={completeAction(task, onCheck)}
-                  left={{ label: "All tasks", icon: <ListIcon />, tone: "neutral", leaves: true, run: () => void removeFromToday({ id: task._id, today }) }}
+                  left={{ label: "Not today", icon: <ListIcon />, tone: "neutral", leaves: true, run: () => void removeFromToday({ id: task._id, today }) }}
                 >
                   <OpenTaskRow task={task} meta={pickMeta(task, today, { priority: false })} onCheck={onCheck}>
                     <RowAction name={`Not today: ${task.title}`} onClick={() => void removeFromToday({ id: task._id, today })}>
