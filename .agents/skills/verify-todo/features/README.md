@@ -4,7 +4,7 @@ This directory is the maintained source for verifying what a Todo user can do. R
 
 ## Baseline preconditions
 
-- `verify.sh launch` printed `verify: ready at http://localhost:3001`, and `verify.sh doctor` exits 0.
+- `verify.sh launch` printed `verify: ready at http://localhost:3001`, and `verify.sh doctor` exits 0. A second checkout sets `TODO_PORT` (for example 3011) for both `verify.sh` and `bunx e2e`, and adds that origin to the Convex `TRUSTED_ORIGINS`.
 - The browser is signed in as the test account: tests declare `{ session: 'user' }`, MCP sessions start from `tests/auth.setup.e2e.ts`.
 - The viewport is a phone, 390x844, as set in `e2e.config.ts`. Check desktop layouts separately at 1280x800 or wider.
 - Each recipe sets its own starting data with the dev data dock: open `/tasks`, tap `Dev data`, tap the preset, tap the `Today` tab.
