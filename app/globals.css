@@ -147,7 +147,7 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 .i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
 /* App frame */
-.phone { width: 100%; min-height: 100dvh; background: var(--bg); color: var(--tx); font-family: var(--ff); display: flex; flex-direction: column; position: relative; padding-top: env(safe-area-inset-top); }
+.phone { width: 100%; min-height: 100dvh; background: var(--bg); color: var(--tx); font-family: var(--ff); display: flex; flex-direction: column; position: relative; padding-top: env(safe-area-inset-top); padding-bottom: var(--kb, 0px); }
 .phone.center { justify-content: center; }
 .scroll { flex: 1; display: flex; flex-direction: column; gap: 20px; padding: 0 16px 20px; }
 .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 24px 20px 16px; }
@@ -348,9 +348,10 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
 .scrim[data-starting-style], .scrim[data-ending-style] { opacity: 0; }
 .scrim[data-swiping] { transition-duration: 0ms; }
 .scrim[data-ending-style] { transition-duration: calc(var(--drawer-swipe-strength, 1) * 400ms); }
-.sheet-viewport { position: fixed; inset: 0; z-index: 41; display: flex; align-items: flex-end; justify-content: center; }
+/* --kb and --vv-top come from KeyboardInset: the sheet sits above an open phone keyboard instead of under it. */
+.sheet-viewport { position: fixed; inset: var(--vv-top, 0px) 0 var(--kb, 0px); z-index: 41; display: flex; align-items: flex-end; justify-content: center; }
 .sheet-content { display: contents; }
-.sheet { --sheet-x: 20px; --sheet-b: calc(24px + env(safe-area-inset-bottom)); position: relative; width: 100%; background: var(--s1); border-top: 1px solid var(--line); border-radius: 28px 28px 0 0; padding: 10px var(--sheet-x) var(--sheet-b); display: flex; flex-direction: column; gap: 18px; box-shadow: var(--shadow); max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; outline: none; transform: translateY(var(--drawer-swipe-movement-y, 0px)); transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1); will-change: transform; }
+.sheet { --sheet-x: 20px; --sheet-b: calc(24px + env(safe-area-inset-bottom)); position: relative; width: 100%; background: var(--s1); border-top: 1px solid var(--line); border-radius: 28px 28px 0 0; padding: 10px var(--sheet-x) var(--sheet-b); display: flex; flex-direction: column; gap: 18px; box-shadow: var(--shadow); max-height: 92%; overflow-y: auto; overscroll-behavior: contain; outline: none; transform: translateY(var(--drawer-swipe-movement-y, 0px)); transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1); will-change: transform; }
 .sheet[data-starting-style], .sheet[data-ending-style] { transform: translateY(100%); }
 .sheet[data-swiping] { transition-duration: 0ms; user-select: none; }
 .sheet[data-ending-style] { transition-duration: calc(var(--drawer-swipe-strength, 1) * 400ms); }

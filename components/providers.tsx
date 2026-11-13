@@ -3,6 +3,7 @@
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { ThemeProvider } from "next-themes";
 import { useCallback, useMemo, useRef, type ReactNode } from "react";
+import { KeyboardInset } from "@/components/keyboard-inset";
 import { authClient } from "@/lib/auth-client";
 
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -11,6 +12,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <ConvexProviderWithAuth client={convex} useAuth={useBetterAuth}>
+        <KeyboardInset />
         {children}
       </ConvexProviderWithAuth>
     </ThemeProvider>
