@@ -31,7 +31,7 @@ test('a task finished from the plan stays in sight and the plan keeps its pick l
   await expect(screen.getByRole('heading', 'Plan today')).toBeVisible();
   await screen.getByRole('button', `Complete ${DONE}`).tap();
   await expect(screen.getByRole('button', '1 done today')).toBeVisible();
-  await expect(screen.getByText('1 of 3 done')).toBeVisible();
+  await expect(screen.getByText('1 of 3 done today')).toBeVisible();
 
   await screen.getByRole('button', `Add ${NEXT} to Today`).tap();
   await expect(screen.getByRole('button', `On Today: ${NEXT}`)).toBeDisabled();

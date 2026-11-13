@@ -78,7 +78,7 @@ export function Ring({ done, target, href }: { done: number; target: number; hre
         </svg>
       </span>
       <span className="num">
-        {done} of {target} done
+        {done} of {target} done today
       </span>
     </>
   );

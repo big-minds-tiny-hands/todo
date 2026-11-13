@@ -427,11 +427,19 @@ textarea.input { height: auto; padding: 14px 16px; resize: none; line-height: 1.
 .toast-text { min-width: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; line-height: 1.3; }
 
 /* "N more tasks today": opens in place. The panel grows from 0fr to 1fr, so the height animates without measuring. */
-.more-toggle .t { color: var(--tx2); }
+.more-toggle .t { flex: none; font-weight: 600; }
+.more-sum { flex: 1; min-width: 0; text-align: right; font-size: 15px; color: var(--tx2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.more-sum .now { color: var(--lime-tx); font-weight: 600; }
 .more-chevron { color: var(--tx3); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
 .more-toggle[aria-expanded="true"] .more-chevron { transform: rotate(90deg); }
 .more-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
 .more-panel[data-open] { grid-template-rows: 1fr; }
+/* Phone Today: the sections under the focus set as one grouped list. Each row opens its list inside the group. */
+.folds { display: flex; flex-direction: column; background: var(--s1); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+.folds:empty { display: none; }
+.folds > * + * { border-top: 1px solid var(--line); }
+.folds .more-toggle { border: 0; border-radius: 0; background: none; }
+.folds .more-panel .card { margin-top: 0 !important; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: var(--bg); }
 .more-panel > div { overflow: hidden; min-height: 0; }
 
 /* Skip link: hidden until a keyboard user tabs to it. */

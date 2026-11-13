@@ -13,6 +13,7 @@ import { SwipeRow } from "@/components/swipe-row";
 import { Avatar, Ring, RowAction, SendToToday } from "@/components/ui-todo";
 import { useAddToToday } from "@/components/tasks/task-actions-menu";
 import { useLinger } from "@/components/tasks/use-linger";
+import { useIsPhone } from "@/hooks/use-is-phone";
 import { useToday } from "@/hooks/use-today";
 import { lastDays, weekday, weekOf } from "@/lib/day";
 import { usePicks } from "./choose-focus";
@@ -51,6 +52,7 @@ export function TodayScreen() {
   const { check, pending, justChecked } = useCheck(data, today, clear);
 
   const view = deriveView(data, goals, today, planning);
+  const phone = useIsPhone();
   const streak = wins?.streak ?? 0;
   const avatar = <Avatar name={user?.name} />;
   const add = () => setAdding("today");
@@ -121,7 +123,7 @@ export function TodayScreen() {
                 Plan today
               </button>
             </section>
-            <GoalsSection goals={view.goals} today={today} prefs={view.data.settings} />
+            <GoalsSection goals={view.goals} today={today} prefs={view.data.settings} compact={phone} />
           </main>
         </>
       );
@@ -138,7 +140,7 @@ export function TodayScreen() {
             onToday={[...view.today].sort(byPriority)}
             done={view.data.doneToday}
             onCheck={onCheck}
-            goals={<GoalsSection goals={view.goals} today={today} prefs={view.data.settings} invite />}
+            goals={<GoalsSection goals={view.goals} today={today} prefs={view.data.settings} compact={phone} invite />}
           />
         </>
       );
@@ -160,12 +162,7 @@ export function TodayScreen() {
               pending={pending}
               justChecked={justChecked}
             />
-            <ScheduleSection schedule={view.data.schedule} minutes={minutes} onCheck={onCheck} />
-            <GoalsSection goals={view.goals} today={today} prefs={view.data.settings} />
-            <div style={{ gridArea: "more", display: "flex", flexDirection: "column", gap: 10 }}>
-              <MoreToday tasks={view.data.rest} today={today} onCheck={onCheck} />
-              <DoneToday tasks={view.data.doneToday.filter((t) => !view.data.focus.some((f) => f._id === t._id) && !view.data.schedule.some((f) => f._id === t._id))} onCheck={onCheck} />
-            </div>
+            <FocusRest data={view.data} goals={view.goals} today={today} minutes={minutes} phone={phone} onCheck={onCheck} />
           </main>
         </>
       );
@@ -196,6 +193,7 @@ export function TodayScreen() {
             week={wins?.week}
             onPlanMore={() => setPlanning(true)}
             onCheck={onCheck}
+            compact={phone}
           />
         </>
       );
@@ -216,6 +214,49 @@ export function TodayScreen() {
       )}
       {slot && <TimeCheck key={slot._id} task={slot} today={today} onDone={(task) => onCheck(task, true)} onDismiss={dismiss} />}
       <AddTaskSheet open={adding !== null} onOpenChange={(open) => !open && setAdding(null)} today={today} defaultWhen={adding ?? "today"} />
+    </>
+  );
+}
+
+/** What sits under a running focus set. On a phone it is one grouped list of rows that open in place. */
+function FocusRest({
+  data,
+  goals,
+  today,
+  minutes,
+  phone,
+  onCheck,
+}: {
+  data: TodayData;
+  goals: GoalRow[];
+  today: string;
+  minutes: number;
+  phone: boolean;
+  onCheck: (task: Task, done: boolean) => void;
+}) {
+  const shown = new Set([...data.focus, ...data.schedule].map((t) => t._id));
+  const schedule = <ScheduleSection schedule={data.schedule} minutes={minutes} onCheck={onCheck} compact={phone} />;
+  const goalRows = <GoalsSection goals={goals} today={today} prefs={data.settings} compact={phone} />;
+  const more = <MoreToday tasks={data.rest} today={today} onCheck={onCheck} />;
+  const done = <DoneToday tasks={data.doneToday.filter((t) => !shown.has(t._id))} onCheck={onCheck} />;
+  if (phone) {
+    return (
+      <div className="folds">
+        {schedule}
+        {goalRows}
+        {more}
+        {done}
+      </div>
+    );
+  }
+  return (
+    <>
+      {schedule}
+      {goalRows}
+      <div style={{ gridArea: "more", display: "flex", flexDirection: "column", gap: 10 }}>
+        {more}
+        {done}
+      </div>
     </>
   );
 }
@@ -398,6 +439,7 @@ function DayWonBody({
   week,
   onPlanMore,
   onCheck,
+  compact,
 }: {
   data: TodayData;
   goals: GoalRow[];
@@ -406,6 +448,7 @@ function DayWonBody({
   week: { day: string; count: number }[] | undefined;
   onPlanMore: () => void;
   onCheck: (task: Task, done: boolean) => void;
+  compact: boolean;
 }) {
   const target = data.settings.dailyTarget;
   const wonDays = week?.filter((d) => d.count >= target).length ?? 0;
@@ -454,7 +497,7 @@ function DayWonBody({
         )}
       </section>
 
-      <GoalsSection goals={goals} today={today} prefs={data.settings} />
+      <GoalsSection goals={goals} today={today} prefs={data.settings} compact={compact} />
 
       <section style={{ gridArea: "done", display: "flex", flexDirection: "column", gap: 10 }}>
         {data.allTasksCount > 0 && (

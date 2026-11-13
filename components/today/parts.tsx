@@ -11,7 +11,7 @@ import { Check, RowAction } from "@/components/ui-todo";
 import { clockLabel, longDate } from "@/lib/day";
 import { reward, showToast, type RewardPrefs } from "@/lib/reward";
 import { useFocusEdit } from "./use-focus-edit";
-import { checklistLabel, clockOf, isNow, pickMeta, slotMeta, type GoalRow, type Task } from "./view";
+import { checklistLabel, clockOf, isNow, pickMeta, slotEnd, slotMeta, type GoalRow, type Task } from "./view";
 
 /** `progress` sits under the title, where it has room for its words on a phone. */
 export function TodayHeader({ today, title = "Today", progress, children }: { today: string; title?: string; progress?: ReactNode; children: ReactNode }) {
@@ -191,13 +191,33 @@ export function completeAction(task: Task, onCheck: CheckProps["onCheck"]): Swip
   return { label: "Done", icon: <CheckIcon />, tone: "lime", run: () => onCheck(task, true) };
 }
 
-/** A row that opens its list in place. More today, Done today and Recently deleted all use it. */
-export function Disclosure({ id, label, children }: { id: string; label: ReactNode; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+/** A row that opens its list in place: a title, an optional summary on the right, and a chevron. */
+export function Disclosure({
+  id,
+  label,
+  summary,
+  name,
+  remember,
+  children,
+}: {
+  id: string;
+  label: ReactNode;
+  summary?: ReactNode;
+  name?: string;
+  /** Keep the row open or closed across visits on this device. */
+  remember?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(() => remember === true && readOpen(id));
+  function toggle() {
+    setOpen(!open);
+    if (remember) saveOpen(id, !open);
+  }
   return (
     <div>
-      <button type="button" className="card row more-toggle" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+      <button type="button" className="card row more-toggle" aria-expanded={open} aria-controls={id} aria-label={name} onClick={toggle}>
         <span className="t">{label}</span>
+        {summary !== undefined && <span className="more-sum num">{summary}</span>}
         <ChevronRight className="more-chevron" />
       </button>
       <div id={id} className="more-panel" data-open={open || undefined} inert={!open}>
@@ -209,6 +229,22 @@ export function Disclosure({ id, label, children }: { id: string; label: ReactNo
       </div>
     </div>
   );
+}
+
+const openKey = (id: string) => `todo:open:${id}`;
+function readOpen(id: string) {
+  try {
+    return window.localStorage.getItem(openKey(id)) === "1";
+  } catch {
+    return false;
+  }
+}
+function saveOpen(id: string, open: boolean) {
+  try {
+    window.localStorage.setItem(openKey(id), open ? "1" : "0");
+  } catch {
+    // Storage can be blocked. The row then starts closed on the next visit.
+  }
 }
 
 /** An open Today task: the check finishes it, the title opens it, and `children` add trailing controls. */
@@ -229,7 +265,7 @@ export function OpenTaskRow({ task, meta, onCheck, children }: { task: Task; met
 export function MoreToday({ tasks, today, onCheck }: { tasks: Task[]; today: string; onCheck: CheckProps["onCheck"] }) {
   if (tasks.length === 0) return null;
   return (
-    <Disclosure id="more-today" label={`${tasks.length} more ${tasks.length === 1 ? "task" : "tasks"} today`}>
+    <Disclosure id="more-today" label="More today" summary={tasks.length} name={`${tasks.length} more ${tasks.length === 1 ? "task" : "tasks"} today`}>
       {tasks.map((task) => (
         <SwipeRow key={task._id} right={completeAction(task, onCheck)}>
           <OpenTaskRow task={task} meta={pickMeta(task, today)} onCheck={onCheck} />
@@ -247,7 +283,7 @@ export function DoneToday({ tasks, onCheck }: { tasks: Task[]; onCheck: CheckPro
   if (tasks.length === 0) return null;
   const newestFirst = [...tasks].sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0));
   return (
-    <Disclosure id="done-today" label={`${tasks.length} done today`}>
+    <Disclosure id="done-today" label="Done today" summary={tasks.length} name={`${tasks.length} done today`}>
       {newestFirst.map((task) => (
         <div key={task._id} className="task done">
           <Check checked onChange={() => onCheck(task, false)} label={`Undo ${task.title}`} />
@@ -261,37 +297,50 @@ export function DoneToday({ tasks, onCheck }: { tasks: Task[]; onCheck: CheckPro
   );
 }
 
-export function ScheduleSection({ schedule, minutes, onCheck }: { schedule: Task[]; minutes: number; onCheck: CheckProps["onCheck"] }) {
+/** On a phone the time slots fold into one row that names the slot now or next. */
+export function ScheduleSection({ schedule, minutes, onCheck, compact }: { schedule: Task[]; minutes: number; onCheck: CheckProps["onCheck"]; compact?: boolean }) {
   if (schedule.length === 0) return null;
+  const rows = schedule.map((task) => {
+    const now = !task.done && isNow(task, minutes);
+    return (
+      <SwipeRow key={task._id} right={completeAction(task, onCheck)}>
+        <div className={["task slot", now && "now", task.done && "done"].filter(Boolean).join(" ")}>
+          <span className="time">{clockLabel(task.startTime!)}</span>
+          <div className="t">
+            <div className="tt">{task.title}</div>
+            <div className="m">{slotMeta(task, now)}</div>
+          </div>
+          <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`${task.done ? "Undo" : "Complete"} ${task.title}`} />
+        </div>
+      </SwipeRow>
+    );
+  });
+  if (compact) {
+    const next = schedule.find((t) => !t.done && slotEnd(t) > minutes);
+    const now = next !== undefined && isNow(next, minutes);
+    const done = schedule.filter((t) => t.done).length;
+    const summary = next ? `${now ? "Now" : clockLabel(next.startTime!)} · ${next.title}` : `${done} of ${schedule.length} done`;
+    return (
+      <div style={{ gridArea: "sched" }}>
+        <Disclosure id="time-slots" remember label="Time slots" summary={<span className={now ? "now" : undefined}>{summary}</span>}>
+          {rows}
+        </Disclosure>
+      </div>
+    );
+  }
   return (
     <section style={{ gridArea: "sched" }}>
       <h2 className="label">
-        <span>Schedule</span>
+        <span>Time slots</span>
         <span className="num">{schedule.length}</span>
       </h2>
-      <div className="card">
-        {schedule.map((task) => {
-          const now = !task.done && isNow(task, minutes);
-          return (
-            <SwipeRow key={task._id} right={completeAction(task, onCheck)}>
-              <div className={["task slot", now && "now", task.done && "done"].filter(Boolean).join(" ")}>
-                <span className="time">{clockLabel(task.startTime!)}</span>
-                <div className="t">
-                  <div className="tt">{task.title}</div>
-                  <div className="m">{slotMeta(task, now)}</div>
-                </div>
-                <Check checked={task.done} onChange={(next) => onCheck(task, next)} label={`${task.done ? "Undo" : "Complete"} ${task.title}`} />
-              </div>
-            </SwipeRow>
-          );
-        })}
-      </div>
+      <div className="card">{rows}</div>
     </section>
   );
 }
 
-/** With `invite`, a day with no goals shows a link to add one instead of nothing. */
-export function GoalsSection({ goals, today, prefs, invite }: { goals: GoalRow[]; today: string; prefs: RewardPrefs; invite?: boolean }) {
+/** With `invite`, a day with no goals shows a link to add one instead of nothing. On a phone, `compact` folds the goals into one row. */
+export function GoalsSection({ goals, today, prefs, invite, compact }: { goals: GoalRow[]; today: string; prefs: RewardPrefs; invite?: boolean; compact?: boolean }) {
   const setMet = useMutation(api.goals.setMet).withOptimisticUpdate((store, { id, today: day, met }) => {
     for (const { args, value } of store.getAllQueries(api.goals.forDay)) {
       if (!value || args.today !== day) continue;
@@ -322,6 +371,35 @@ export function GoalsSection({ goals, today, prefs, invite }: { goals: GoalRow[]
     void setMet({ id: goal._id, today, met });
   }
 
+  const rows = goals.map((row) => (
+    <div key={row.goal._id} className="goal">
+      <div className="t" style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 16 }}>{row.goal.title}</div>
+        {row.goal.detail && (
+          <div className="small muted" style={{ marginTop: 2 }}>
+            {row.goal.detail}
+          </div>
+        )}
+      </div>
+      <Check checked={row.met} onChange={(next) => check(row, next)} label={`${row.met ? "Undo" : "Mark"} ${row.goal.title} done`} />
+    </div>
+  ));
+
+  if (compact) {
+    const allMet = metCount === goals.length;
+    return (
+      <div style={{ gridArea: "goals" }}>
+        <Disclosure id="daily-goals" remember label="Daily goals" summary={<span className={allMet ? "now" : undefined}>{`${metCount} of ${goals.length} met`}</span>}>
+          {rows}
+          <Link className="row" href="/settings/goals">
+            <span className="t">Manage daily goals</span>
+            <ChevronRight className="more-chevron" />
+          </Link>
+        </Disclosure>
+      </div>
+    );
+  }
+
   return (
     <section style={{ gridArea: "goals" }}>
       <h2 className="label">
@@ -341,21 +419,7 @@ export function GoalsSection({ goals, today, prefs, invite }: { goals: GoalRow[]
           </Link>
         </span>
       </h2>
-      <div className="card">
-        {goals.map((row) => (
-          <div key={row.goal._id} className="goal">
-            <div className="t" style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 16 }}>{row.goal.title}</div>
-              {row.goal.detail && (
-                <div className="small muted" style={{ marginTop: 2 }}>
-                  {row.goal.detail}
-                </div>
-              )}
-            </div>
-            <Check checked={row.met} onChange={(next) => check(row, next)} label={`${row.met ? "Undo" : "Mark"} ${row.goal.title} done`} />
-          </div>
-        ))}
-      </div>
+      <div className="card">{rows}</div>
     </section>
   );
 }
