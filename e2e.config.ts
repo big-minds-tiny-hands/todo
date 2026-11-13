@@ -24,8 +24,9 @@ export default {
       // Todo is used on a phone first, so tests run at a phone viewport.
       engine: web({ viewport: { width: 390, height: 844 } }),
       app: {
-        url: 'http://localhost:3001',
-        // The dev box lane port for this repo. reuseExisting attaches to a dev server that is already up.
+        // The dev box lane port for this repo; TODO_PORT moves a second checkout off it, as in verify.sh.
+        // reuseExisting attaches to a dev server that is already up.
+        url: `http://localhost:${process.env.TODO_PORT ?? 3001}`,
         command: {
           executable: 'bun',
           args: ['x', 'next', 'dev', '--port', '{port}'],

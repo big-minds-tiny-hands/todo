@@ -57,12 +57,14 @@ function useRingGains(done: number, target: number) {
   return { plus, ping };
 }
 
-/** Daily progress: a small ring and "1 of 3 done", done today against the daily target. */
+/** Daily progress: a small ring and "2 more to win today", done today against the daily target. */
 export function Ring({ done, target, href }: { done: number; target: number; href?: string }) {
   const circumference = 113;
   const offset = circumference * (1 - Math.min(1, target ? done / target : 0));
   const { plus, ping } = useRingGains(done, target);
   const className = `progress${done >= target ? " full" : ""}`;
+  // What is left to win the day, not a score: "1 of 3 done" read as the focus set's count.
+  const label = done >= target ? "Day won" : `${target - done} more to win today`;
   const content = (
     <>
       <span className="ring" aria-hidden="true">
@@ -77,13 +79,11 @@ export function Ring({ done, target, href }: { done: number; target: number; hre
           <circle className="val" cx="22" cy="22" r="18" style={{ strokeDasharray: circumference, strokeDashoffset: offset }} />
         </svg>
       </span>
-      <span className="num">
-        {done} of {target} done
-      </span>
+      <span className="num">{label}</span>
     </>
   );
   return href ? (
-    <Link className={className} href={href} aria-label={`${done} of ${target} done today. See your wins`}>
+    <Link className={className} href={href} aria-label={`${label}. See your wins`}>
       {content}
     </Link>
   ) : (

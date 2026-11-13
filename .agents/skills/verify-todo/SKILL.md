@@ -95,6 +95,8 @@ It stops only the dev server this helper started, found by the pid in `.e2e/veri
 - e2e runs one test at a time (`workers: 1`): every test reseeds the same account. Never run two e2e commands at once.
 - The browser pane in the desktop app pauses animation frames while it is hidden. Motion finishes drags on frames, so synthetic swipes there can stick mid-gesture. Prove gestures with `tests/gestures.e2e.ts`, whose headless browser runs frames.
 - Sign-up is open. Every sign-up adds a real account to the dev deployment, so use a stamped `@todo.test` address.
+- The dev server can keep serving an old `app/globals.css` after an edit, even across a restart: Turbopack's persistent cache in `.next/dev` holds it. If a new rule is missing from the served CSS, run `verify.sh cleanup`, delete `.next/dev`, then `verify.sh launch`. Check the served CSS, not the file.
+- iPhone keyboard checks run in the iOS Simulator on the Mac (`ssh mac`). More than one simulator can be booted by other sessions, so `xcrun simctl ... booted` can hit someone else's device. Always pass your device's UDID.
 
 ## Feature map
 

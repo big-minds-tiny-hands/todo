@@ -130,7 +130,7 @@ function AddTaskForm({ today, defaultWhen = "later", defaultDay }: AddTaskProps)
       <div className="field">
         <span className="fl" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           <ClockIcon size={16} />
-          Time (optional)
+          Time slot
         </span>
         {time ? (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
