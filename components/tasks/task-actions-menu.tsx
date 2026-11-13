@@ -6,7 +6,7 @@ import { useMutation } from "convex/react";
 import type { ReactElement } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { ArrowDown, ArrowUp, CalendarIcon, CheckIcon, ClockIcon, MinusIcon, SunIcon, TrashIcon } from "@/components/icons";
+import { ArrowDown, ArrowUp, CalendarIcon, CheckIcon, ClockIcon, ListIcon, MinusIcon, SunIcon, TrashIcon } from "@/components/icons";
 import { PRIORITY_LABEL, PriorityDot } from "@/components/ui-todo";
 import { showToast } from "@/lib/reward";
 import type { Task } from "@/components/tasks/when";
@@ -85,9 +85,11 @@ export function TaskActionsMenu({
   const update = useMutation(api.tasks.update);
   const move = useMutation(api.tasks.move);
   const removeFromToday = useMutation(api.tasks.removeFromToday);
+  const removeFromFocus = useMutation(api.tasks.removeFromFocus);
   const addToToday = useAddToToday();
   const deleteTask = useDeleteTask();
   const onToday = placeOf(task, today).kind === "today";
+  const inFocus = task.focusDay === today && !task.done;
 
   return (
     <Menu.Root open={open} onOpenChange={onOpenChange}>
@@ -96,10 +98,16 @@ export function TaskActionsMenu({
         <Menu.Backdrop className="scrim" />
         <Menu.Positioner anchor={anchor ?? undefined} side="bottom" align="end" sideOffset={6} collisionPadding={12} style={{ zIndex: 41 }}>
           <Menu.Popup className="menu" aria-label={task.title} style={{ width: 272 }}>
+            {inFocus && (
+              <Menu.Item className="mi" onClick={() => void removeFromFocus({ id: task._id })}>
+                <MinusIcon />
+                Take out of focus
+              </Menu.Item>
+            )}
             {onToday ? (
               <Menu.Item className="mi" onClick={() => void removeFromToday({ id: task._id, today })}>
-                <MinusIcon />
-                Remove from Today
+                <ListIcon />
+                Not today
               </Menu.Item>
             ) : (
               <Menu.Item className="mi" onClick={() => void addToToday(task, today)}>

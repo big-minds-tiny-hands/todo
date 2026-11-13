@@ -19,7 +19,7 @@ test('the focus set can be edited after it starts', { session: 'user' }, async (
   for (const title of [PAINT, PATEL, FIRE, TOUR]) {
     await screen.getByLabel('Task').fill(title);
     await screen.getByRole('button', 'Add task').tap();
-    await expect(screen.getByText('Added to Today')).toBeVisible();
+    await expect(screen.getByLabel('Task')).toHaveValue('');
   }
   await screen.getByRole('button', 'Close').tap();
 
@@ -32,7 +32,8 @@ test('the focus set can be edited after it starts', { session: 'user' }, async (
 
   await set.getByRole('button', 'Edit focus set').tap();
   await set.getByRole('button', `Take ${PATEL} out of focus`).tap();
-  await expect(set.getByText(PATEL)).toBeHidden();
+  await expect(set.getByRole('button', `Take ${PATEL} out of focus`)).toBeHidden();
+  await expect(set.getByRole('button', `Pick ${PATEL}`)).toBeVisible();
   await set.getByRole('button', `Pick ${TOUR}`).tap();
   await expect(set.getByRole('link', TOUR)).toBeVisible();
 

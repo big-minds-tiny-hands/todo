@@ -305,7 +305,9 @@ export const addToFocus = mutation({
       members = [];
     }
     if (members.length >= settings.focusSize) throw new ConvexError(`Your focus set already has ${settings.focusSize}`);
-    await ctx.db.patch(id, { focusDay: today, focusSet: set, focusSlot: members.length, todayDay: today, pickedAt: pickedAt(task, today) });
+    // A task taken out leaves a gap in the slots, so the new one goes after the last slot, not at the count.
+    const slot = members.reduce((max, t) => Math.max(max, (t.focusSlot ?? -1) + 1), 0);
+    await ctx.db.patch(id, { focusDay: today, focusSet: set, focusSlot: slot, todayDay: today, pickedAt: pickedAt(task, today) });
     return null;
   },
 });

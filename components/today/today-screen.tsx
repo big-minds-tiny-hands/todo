@@ -153,7 +153,9 @@ export function TodayScreen() {
           <main className="scroll cols" style={{ gridTemplateAreas: "'focus sched' 'focus goals' 'more goals'" }}>
             <FocusSection
               focus={view.data.focus}
-              streak={streak}
+              candidates={[...view.data.rest, ...view.data.schedule].filter((t) => !t.done).sort(byPriority)}
+              size={view.data.settings.focusSize}
+              today={today}
               onCheck={onCheck}
               pending={pending}
               justChecked={justChecked}

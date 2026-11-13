@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { CheckIcon, ChevronRight, ClockIcon, ExpandIcon, FlameIcon, PlusIcon, UndoIcon } from "@/components/icons";
+import { CheckIcon, ChevronRight, ClockIcon, ExpandIcon, FlameIcon, ListIcon, MinusIcon, PencilIcon, PlusIcon, UndoIcon } from "@/components/icons";
 import { SwipeRow, type SwipeAction } from "@/components/swipe-row";
-import { Check } from "@/components/ui-todo";
+import { Check, RowAction } from "@/components/ui-todo";
 import { clockLabel, longDate } from "@/lib/day";
 import { reward, showToast, type RewardPrefs } from "@/lib/reward";
+import { useFocusEdit } from "./use-focus-edit";
 import { checklistLabel, clockOf, isNow, pickMeta, slotMeta, type GoalRow, type Task } from "./view";
 
 /** `progress` sits under the title, where it has room for its words on a phone. */
@@ -67,50 +68,120 @@ function focusMeta(task: Task, { pending, justChecked }: Omit<CheckProps, "onChe
   return null;
 }
 
-export function FocusSection({ focus, streak, ...props }: { focus: Task[]; streak: number } & CheckProps) {
-  const done = focus.filter((t) => t.done).length;
-  const fresh = props.justChecked !== null && focus.some((t) => t._id === props.justChecked);
+/**
+ * The focus set. Each open row finishes on its check, opens on its title, and swipes left back to All tasks.
+ * Edit takes tasks out, sends them back, and fills the free slots from the rest of Today.
+ */
+export function FocusSection({ focus, candidates, size, today, ...props }: { focus: Task[]; candidates: Task[]; size: number; today: string } & CheckProps) {
+  const [editing, setEditing] = useState(false);
+  const edit = useFocusEdit(today);
+  const left = focus.filter((t) => !t.done).length;
+  const free = size - focus.length;
   return (
-    <section className="focus" aria-label="Focus set" style={{ gridArea: "focus", position: "relative" }}>
+    <section className="focus" aria-label="Focus set" data-editing={editing || undefined} style={{ gridArea: "focus", position: "relative" }}>
       <div className="focus-head">
         <div>
           <h2 className="h3">Focus</h2>
-          <div className={fresh ? "small num" : "small muted num"} style={{ marginTop: 2, color: fresh ? "var(--lime-tx)" : undefined }}>
-            {done} of {focus.length} done
+          <div className="small muted num" style={{ marginTop: 2 }}>
+            {editing ? `${focus.length} of ${size} picked` : `${left} left`}
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <StreakPill streak={streak} />
-          <Link className="btn sec act" href="/focus" aria-label="Open focus mode">
-            <ExpandIcon />
-            Focus mode
-          </Link>
+        <div className="focus-actions">
+          {editing ? (
+            <button type="button" className="btn pri act" onClick={() => setEditing(false)}>
+              Done
+            </button>
+          ) : (
+            <>
+              <button type="button" className="btn sec act" aria-label="Edit focus set" onClick={() => setEditing(true)}>
+                <PencilIcon />
+                Edit
+              </button>
+              <Link className="btn sec act" href="/focus" aria-label="Open focus mode">
+                <ExpandIcon />
+                Focus mode
+              </Link>
+            </>
+          )}
         </div>
       </div>
-      <div className="bar" style={{ margin: "0 14px 6px" }}>
-        <i style={{ width: `${focus.length ? (done / focus.length) * 100 : 0}%` }} />
-      </div>
-      {focus.map((task) => {
-        const glow = task._id === props.justChecked && task.done;
-        const meta = focusMeta(task, props);
-        return (
-          <SwipeRow key={task._id} right={completeAction(task, props.onCheck)}>
-            <div className={["task", task.done && "done", glow && "glow"].filter(Boolean).join(" ")} style={glow ? { position: "relative" } : undefined}>
-              <Check size="lg" checked={task.done} onChange={(next) => props.onCheck(task, next)} label={`${task.done ? "Undo" : "Complete"} ${task.title}`} />
-              <div className="t">
-                <div className="tt">{task.title}</div>
-                {meta && <div className="m">{meta}</div>}
-              </div>
-              {glow && (
-                <span className="plus1" aria-hidden="true" style={{ left: 34, top: -14 }}>
-                  +1
-                </span>
-              )}
+      {!editing && (
+        <div className="bar" style={{ margin: "0 14px 6px" }}>
+          <i style={{ width: `${focus.length ? ((focus.length - left) / focus.length) * 100 : 0}%` }} />
+        </div>
+      )}
+      {focus.map((task) =>
+        editing && !task.done ? (
+          <div key={task._id} className="task">
+            <button type="button" className="mark out" aria-label={`Take ${task.title} out of focus`} onClick={() => edit.takeOut(task)}>
+              <span>
+                <MinusIcon />
+              </span>
+            </button>
+            <TaskLink task={task} meta={focusMeta(task, props)} />
+            <RowAction name={`Not today: ${task.title}`} onClick={() => edit.sendBack(task)}>
+              Not today
+            </RowAction>
+          </div>
+        ) : (
+          <FocusRow key={task._id} task={task} {...props} onSendBack={editing ? undefined : () => edit.sendBack(task)} />
+        ),
+      )}
+      {editing && free > 0 && (
+        <div className="focus-pick">
+          {Array.from({ length: free }, (_, i) => (
+            <div key={i} className="slot-empty">
+              <span className="mark" aria-hidden="true" style={{ margin: "0 -6px" }}>
+                <span>{focus.length + i + 1}</span>
+              </span>
+              {candidates.length > 0 ? "Pick from Today" : "Nothing else on Today"}
             </div>
-          </SwipeRow>
-        );
-      })}
+          ))}
+          {candidates.map((task) => (
+            <div key={task._id} className="task">
+              <TaskLink task={task} meta={pickMeta(task, today, { priority: task.priority === "high" })} />
+              <RowAction name={`Pick ${task.title}`} onClick={() => edit.pick(task)}>
+                Pick
+              </RowAction>
+            </div>
+          ))}
+          {candidates.length === 0 && (
+            <Link className="link" href="/tasks" style={{ margin: "0 14px" }}>
+              <PlusIcon size={18} />
+              Pick from All tasks
+            </Link>
+          )}
+        </div>
+      )}
     </section>
+  );
+}
+
+function TaskLink({ task, meta }: { task: Task; meta: ReactNode }) {
+  return (
+    <Link className="t" href={`/task/${task._id}`} style={{ textDecoration: "none" }}>
+      <div className="tt">{task.title}</div>
+      {meta && <div className="m">{meta}</div>}
+    </Link>
+  );
+}
+
+function FocusRow({ task, onSendBack, ...props }: { task: Task; onSendBack?: () => void } & CheckProps) {
+  const glow = task._id === props.justChecked && task.done;
+  const back: SwipeAction | undefined =
+    onSendBack && !task.done ? { label: "All tasks", icon: <ListIcon />, tone: "neutral", leaves: true, run: onSendBack } : undefined;
+  return (
+    <SwipeRow right={completeAction(task, props.onCheck)} left={back}>
+      <div className={["task", task.done && "done", glow && "glow"].filter(Boolean).join(" ")} style={glow ? { position: "relative" } : undefined}>
+        <Check size="lg" checked={task.done} onChange={(next) => props.onCheck(task, next)} label={`${task.done ? "Undo" : "Complete"} ${task.title}`} />
+        <TaskLink task={task} meta={focusMeta(task, props)} />
+        {glow && (
+          <span className="plus1" aria-hidden="true" style={{ left: 34, top: -14 }}>
+            +1
+          </span>
+        )}
+      </div>
+    </SwipeRow>
   );
 }
 

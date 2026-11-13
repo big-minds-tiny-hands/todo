@@ -234,6 +234,15 @@ button, a, [role="button"], label.task, .chip, .tab, .seg button, .day, .check, 
 .focus-head { display: flex; justify-content: space-between; align-items: center; padding: 0 14px 10px; }
 .focus .task { min-height: 62px; }
 .focus .tt { font-size: 18px; font-weight: 500; }
+.focus-actions { display: flex; align-items: center; gap: 8px; }
+.focus .task.done .tt { -webkit-line-clamp: 1; line-clamp: 1; }
+.mark.out > span { border: 0; border-radius: 50%; background: var(--s3); color: var(--tx); }
+.mark.out .i { width: 16px; height: 16px; stroke-width: 2.6; }
+.focus-pick { display: flex; flex-direction: column; gap: 2px; padding: 4px 0 6px; border-top: 1px solid var(--line); margin-top: 2px; }
+.focus-pick .slot-empty { margin: 6px 10px 4px; }
+/* Edit mode swaps the rows; each new row settles in from just below, so a picked task visibly lands in its slot. */
+.focus[data-editing] .task, .focus[data-editing] .focus-pick { animation: settle 0.18s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes settle { from { opacity: 0; transform: translateY(4px); } }
 .slot-empty { margin: 4px 10px; min-height: 52px; border: 1.5px dashed var(--s3); border-radius: 14px; display: flex; align-items: center; gap: 10px; padding: 0 14px; color: var(--tx3); font-size: 15px; }
 .bar { height: 6px; border-radius: 999px; background: var(--s3); overflow: hidden; }
 .bar > i { display: block; height: 100%; background: var(--lime); border-radius: 999px; transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
