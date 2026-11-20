@@ -1,11 +1,12 @@
-# PR quality gate. The org standard (big-minds-tiny-hands/.github CI-STANDARD.md)
-# runs the full gate once on the PR, and the single-step Mergify queue merges an
-# up-to-date PR without a second run, so there is no push-to-main trigger.
+# Quality gate, once a night on main and by hand. Pull requests and pushes run
+# no CI until Tiny has its first real record in production (ENG-3563, and
+# big-minds-tiny-hands/.github CI-STANDARD.md).
 name: CI
 
 on:
-  pull_request:
-    branches: [main]
+  schedule:
+    - cron: "53 6 * * *"
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

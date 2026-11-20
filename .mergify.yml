@@ -1,32 +1,9 @@
-# Merge queue: squash merges, re-tested against the latest main. A PR enters
-# with the `queue` label (auto-merge below) or by commenting `@mergifyio queue`.
-# The org base in big-minds-tiny-hands/.github (CI-STANDARD.md) is copied in
+# No merge queue until Tiny has its first real record in production
+# (ENG-3563): pull requests run no CI, so a queue would wait on checks that
+# never arrive. A PR with the `queue` label merges on its own once the
+# protections below pass. The org base in big-minds-tiny-hands/.github (CI-STANDARD.md) is copied in
 # here, not extended: that repo is private and this one is public, and Mergify
 # refuses a private base for a public repo.
-
-defaults:
-  queue_rule:
-    batch_size: 1
-    max_checks_retries: 0
-    merge_method: squash
-    update_method: merge
-    commit_message_format:
-      title: pr-title
-      body: pr-body
-
-merge_queue:
-  max_parallel_checks: 1
-  reset_on_external_merge: always
-
-queue_rules:
-  - name: default
-    branch_protection_injection_mode: queue
-    queue_conditions:
-      - base = main
-      - head-repo-full-name = big-minds-tiny-hands/todo
-      - -draft
-      - check-success = Quality gate
-      - check-success = PR hygiene / checks
 
 merge_protections_settings:
   reporting_method: check-runs
